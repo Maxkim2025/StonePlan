@@ -902,7 +902,7 @@
   <div class="grid">
     <!-- Today -->
     <div class="card" id="section-today">
-      <div class="card-title"><span class="icon">📋</span> 今日任务 <span id="todayDate" style="font-size:12px;color:#94a3b8;font-weight:400;margin-left:8px;"></span></div>
+      <div class="card-title"><span class="icon">📋</span> 今日任务 <span id="todayDate" style="font-size:12px;color:#94a3b8;font-weight:400;margin-left:8px;"></span> <button onclick="generateTodayPlan()" style="margin-left:auto;padding:4px 12px;font-size:12px;border:1px solid #475569;border-radius:6px;background:#1e293b;color:#e2e8f0;cursor:pointer;">🔄 生成今日计划</button></div>
       <div id="nowAction"></div>
       <div id="todaySection"></div>
     </div>
@@ -946,7 +946,7 @@
 <script>
 // ─── 初始数据（静态嵌入） ─────────────────────────
 let dashboardData = {
-  "generated_at": "2026-04-25 17:02:45",
+  "generated_at": "2026-04-25 17:14:56",
   "goals": [
     {
       "id": "goal-ai-interview",
@@ -1580,12 +1580,12 @@ let dashboardData = {
     "sleep_hours": "8.5",
     "tasks": [
       {
-        "done": true,
+        "done": false,
         "text": "🥗 记录早餐（食物+估算热量，目标≤500大卡）",
         "slot": "起床后"
       },
       {
-        "done": true,
+        "done": false,
         "text": "📖 背30个英语单词（用APP或单词本）",
         "slot": "上午"
       },
@@ -1595,12 +1595,12 @@ let dashboardData = {
         "slot": "下午"
       },
       {
-        "done": true,
+        "done": false,
         "text": "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）",
         "slot": "下午"
       },
       {
-        "done": true,
+        "done": false,
         "text": "✍️ 做1篇四级阅读理解（找回手感）",
         "slot": "晚上"
       },
@@ -1610,9 +1610,9 @@ let dashboardData = {
         "slot": "睡前"
       }
     ],
-    "done": 4,
+    "done": 0,
     "total": 6,
-    "pct": 67,
+    "pct": 0,
     "time_table": {
       "headers": [
         "时间窗口",
@@ -1632,14 +1632,14 @@ let dashboardData = {
         [
           "起床后",
           "🥗 记录早餐（食物+估算热量，目标≤500大卡）",
-          "✅",
+          "⬜",
           "10",
           "🎯 减脂"
         ],
         [
           "上午",
           "📖 背30个英语单词（用APP或单词本）",
-          "✅",
+          "⬜",
           "15",
           "🎯 四级"
         ],
@@ -1653,14 +1653,14 @@ let dashboardData = {
         [
           "下午",
           "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）",
-          "✅",
+          "⬜",
           "40",
           "🎯 AI面试"
         ],
         [
           "晚上",
           "✍️ 做1篇四级阅读理解（找回手感）",
-          "✅",
+          "⬜",
           "20",
           "🎯 四级"
         ],
@@ -3452,6 +3452,16 @@ render(dashboardData);
 console.log('Stone Plan Dashboard v2.0.1 - ' + new Date().toISOString());
 
 setInterval(fetchAndUpdate, 10000);
+
+function generateTodayPlan() {
+  fetch('/api/generate-today')
+    .then(r => r.json())
+    .then(result => {
+      if (result.ok) {
+        setTimeout(fetchAndUpdate, 500);
+      }
+    });
+}
 
 // Scroll spy for nav highlighting
 const sections = ['timeline','today','goals','quicklog','plan','health','finance'];

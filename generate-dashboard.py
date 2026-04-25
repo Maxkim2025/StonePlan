@@ -1815,7 +1815,7 @@ def generate_html():
   <div class="grid">
     <!-- Today -->
     <div class="card" id="section-today">
-      <div class="card-title"><span class="icon">📋</span> 今日任务 <span id="todayDate" style="font-size:12px;color:#94a3b8;font-weight:400;margin-left:8px;"></span></div>
+      <div class="card-title"><span class="icon">📋</span> 今日任务 <span id="todayDate" style="font-size:12px;color:#94a3b8;font-weight:400;margin-left:8px;"></span> <button onclick="generateTodayPlan()" style="margin-left:auto;padding:4px 12px;font-size:12px;border:1px solid #475569;border-radius:6px;background:#1e293b;color:#e2e8f0;cursor:pointer;">🔄 生成今日计划</button></div>
       <div id="nowAction"></div>
       <div id="todaySection"></div>
     </div>
@@ -2791,6 +2791,16 @@ console.log('Stone Plan Dashboard v2.0.1 - ' + new Date().toISOString());
 
 setInterval(fetchAndUpdate, 10000);
 
+function generateTodayPlan() {{
+  fetch('/api/generate-today')
+    .then(r => r.json())
+    .then(result => {{
+      if (result.ok) {{
+        setTimeout(fetchAndUpdate, 500);
+      }}
+    }});
+}}
+
 // Scroll spy for nav highlighting
 const sections = ['timeline','today','goals','quicklog','plan','health','finance'];
 const navPills = document.querySelectorAll('.nav-pill');
@@ -3047,6 +3057,239 @@ def process_sync_queue(queue):
         except Exception as e:
             print(f'[sync] Error processing {item.get("type")}: {e}')
 
+# ─── 每日计划自动生成 ──────────────────────────────────────────
+
+def find_weekly_plan(target_date):
+    """找到覆盖 target_date 的周计划"""
+    weekly_dir = os.path.join(BASE_DIR, 'plans/weekly')
+    if not os.path.exists(weekly_dir):
+        return None
+    target_dt = datetime.strptime(target_date, '%Y-%m-%d')
+    for fname in sorted(os.listdir(weekly_dir), reverse=True):
+        if not fname.endswith('.md'):
+            continue
+        fpath = os.path.join(weekly_dir, fname)
+        content = open(fpath, encoding='utf-8').read()
+        fm = parse_frontmatter(content)
+        period = fm.get('period', '')
+        # 解析 "2026-04-25 ~ 2026-05-01" 格式
+        if '~' in period or '-' in period:
+            parts = re.split(r'\s*[~—]\s*', period)
+            if len(parts) == 2:
+                try:
+                    start = datetime.strptime(parts[0].strip()[:10], '%Y-%m-%d')
+                    end = datetime.strptime(parts[1].strip()[:10], '%Y-%m-%d')
+                    if start <= target_dt <= end:
+                        return content
+                except:
+                    pass
+    return None
+
+def extract_day_tasks_from_weekly(weekly_content, day_num):
+    """从周计划中提取第 day_num 天的任务"""
+    tasks = []
+    body = parse_body(weekly_content)
+
+    # 找到 "### Day N" 或 "### Day N（..." 的章节
+    day_pattern = re.compile(rf'### Day\s+{day_num}\s')
+    current_section = None
+
+    for line in body.split('\n'):
+        if day_pattern.match(line):
+            current_section = True
+            continue
+        if current_section and line.startswith('### '):
+            current_section = False
+            continue
+        if current_section and line.strip().startswith('|') and not line.strip().startswith('|--'):
+            cells = [c.strip() for c in line.split('|')[1:-1]]
+            if len(cells) >= 4:
+                time_slot = cells[0]
+                task_text = cells[1]
+                xp = cells[2] if len(cells) > 2 else '10'
+                goal_tag = cells[3] if len(cells) > 3 else ''
+                # 跳过表头行
+                if '时间' in time_slot or '任务' in task_text:
+                    continue
+                if task_text and not task_text.startswith('-'):
+                    tasks.append({
+                        'time': time_slot,
+                        'text': task_text,
+                        'xp': xp.replace('XP', '').strip(),
+                        'goal': goal_tag.replace('🎯 ', ''),
+                    })
+    return tasks
+
+def generate_tasks_from_goals(goals, target_date):
+    """没有周计划时，根据目标倒推计划表生成任务"""
+    tasks = []
+    # 固定任务模板
+    tasks.append({'time': '起床后', 'text': '🥗 记录早餐（食物+估算热量，目标≤500大卡）', 'xp': '10', 'goal': '减脂'})
+    tasks.append({'time': '上午', 'text': '📖 背30个英语单词（用APP或单词本）', 'xp': '15', 'goal': '四级'})
+    tasks.append({'time': '下午', 'text': '📚 阅读健身参考资料，了解热量计算方法', 'xp': '25', 'goal': '减脂'})
+    tasks.append({'time': '下午', 'text': '🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）', 'xp': '40', 'goal': 'AI面试'})
+    tasks.append({'time': '晚上', 'text': '✍️ 做1篇四级阅读理解（找回手感）', 'xp': '20', 'goal': '四级'})
+    tasks.append({'time': '睡前', 'text': '🥗 记录晚餐（食物+估算热量，目标≤500大卡）', 'xp': '10', 'goal': '减脂'})
+    return tasks
+
+def ensure_fixed_tasks(tasks, goals):
+    """确保固定任务存在（饮食记录）"""
+    has_breakfast = any('早餐' in t['text'] for t in tasks)
+    has_dinner = any('晚餐' in t['text'] for t in tasks)
+    if not has_breakfast:
+        tasks.insert(0, {'time': '起床后', 'text': '🥗 记录早餐（食物+估算热量，目标≤500大卡）', 'xp': '10', 'goal': '减脂'})
+    if not has_dinner:
+        tasks.append({'time': '睡前', 'text': '🥗 记录晚餐（食物+估算热量，目标≤500大卡）', 'xp': '10', 'goal': '减脂'})
+
+def compute_streaks_from_history():
+    """从历史 quicklog 计算连击状态"""
+    streaks = {
+        '🥗 饮食记录': {'current': 0, 'max': 0},
+        '📖 英语学习': {'current': 0, 'max': 0},
+        '🏃 运动训练': {'current': 0, 'max': 0},
+        '🤖 AI学习': {'current': 0, 'max': 0},
+    }
+    # 扫描最近30天的 quicklog
+    quicklog_dir = os.path.join(BASE_DIR, 'quicklog')
+    if not os.path.exists(quicklog_dir):
+        return streaks
+
+    today = datetime.now()
+    for i in range(30):
+        d = today - timedelta(days=i)
+        date_str = d.strftime('%Y-%m-%d')
+        ql_path = os.path.join(quicklog_dir, d.strftime('%Y/%m'), f'{date_str}.md')
+        if not os.path.exists(ql_path):
+            break  # 连击中断
+        content = open(ql_path, encoding='utf-8').read()
+        for key in streaks:
+            emoji = key.split(' ')[0]
+            if emoji in content:
+                streaks[key]['current'] += 1
+                streaks[key]['max'] = max(streaks[key]['max'], streaks[key]['current'])
+
+    return streaks
+
+def build_daily_md(target_date, tasks, goals, streaks, weekly_plan):
+    """生成每日任务 md 文件内容"""
+    dt = datetime.strptime(target_date, '%Y-%m-%d')
+    weekday_names = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+    weekday = weekday_names[dt.weekday()]
+
+    goal_ids = [g.get('id', '') for g in goals]
+    plan_ref = ''
+    if weekly_plan:
+        # 从周计划 frontmatter 提取 id
+        fm = parse_frontmatter(weekly_plan)
+        plan_ref = fm.get('id', '')
+
+    total_xp = sum(int(t.get('xp', 10)) for t in tasks)
+
+    lines = []
+    # Frontmatter
+    lines.append('---')
+    lines.append(f'id: task-{target_date}')
+    lines.append('type: daily')
+    lines.append(f'date: {target_date}')
+    lines.append(f'energy_level: 中')
+    lines.append(f'sleep_time: "-"')
+    lines.append(f'wake_time: "-"')
+    lines.append(f'sleep_hours: "-"')
+    if plan_ref:
+        lines.append(f'plan_ref: {plan_ref}')
+    lines.append(f'goals_today: [{", ".join(goal_ids)}]')
+    lines.append('---')
+    lines.append('')
+
+    # 标题
+    lines.append(f'# 📋 每日计划 {target_date}（{weekday}）')
+    lines.append('')
+
+    # 时间表格
+    lines.append('| 时间窗口 | 任务 | 状态 | XP | 目标 |')
+    lines.append('|---------|------|------|-----|------|')
+    for t in tasks:
+        lines.append(f"| {t['time']} | {t['text']} | ⬜ | {t['xp']} | 🎯 {t['goal']} |")
+    lines.append('')
+
+    # 今日数据
+    lines.append('## 今日数据')
+    lines.append(f'- 总 XP 可获得：{total_xp}')
+    lines.append('- 已获得 XP：_由 Dashboard 自动计算_')
+    lines.append('- 完成率：_由 Dashboard 自动计算_')
+    lines.append('')
+
+    # 连击状态
+    lines.append('## 🔥 连击状态')
+    lines.append('| 任务类型 | 当前连击 | 最长连击 |')
+    lines.append('|---------|---------|---------|')
+    for key, val in streaks.items():
+        lines.append(f"| {key} | {val['current']}天 | {val['max']}天 |")
+    lines.append('')
+
+    # 备注
+    lines.append('## 备注')
+    lines.append('- 由系统自动生成')
+    lines.append('')
+
+    return '\n'.join(lines)
+
+def generate_daily_plan(target_date=None):
+    """根据活跃目标和周计划自动生成每日任务 md 文件"""
+    if target_date is None:
+        target_date = datetime.now().strftime('%Y-%m-%d')
+
+    # 检查是否已存在
+    date_parts = target_date.split('-')
+    year, month = date_parts[0], date_parts[1]
+    today_path = os.path.join(BASE_DIR, f"tasks/daily/{year}/{month}/{target_date}.md")
+    if os.path.exists(today_path):
+        return {'ok': False, 'error': f'今日计划已存在: {target_date}'}
+
+    # 1. 读取所有活跃目标
+    goals = scan_goals()
+    if not goals:
+        return {'ok': False, 'error': '没有活跃目标'}
+
+    # 2. 找到对应的周计划
+    weekly_plan = find_weekly_plan(target_date)
+
+    # 3. 计算今天是第几周、第几天
+    day_of_week = datetime.strptime(target_date, '%Y-%m-%d').strftime('%A')
+    week_day_map = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4,
+                    'Friday': 5, 'Saturday': 6, 'Sunday': 7}
+    day_num = week_day_map.get(day_of_week, 1)
+
+    # 4. 从周计划提取今天的任务，或根据目标倒推生成
+    tasks = []
+    if weekly_plan:
+        tasks = extract_day_tasks_from_weekly(weekly_plan, day_num)
+        # 如果周计划中今天的任务太少（<=3），补充默认任务
+        if len(tasks) <= 3:
+            default_tasks = generate_tasks_from_goals(goals, target_date)
+            existing_texts = {t['text'] for t in tasks}
+            for dt in default_tasks:
+                if dt['text'] not in existing_texts:
+                    tasks.append(dt)
+    else:
+        tasks = generate_tasks_from_goals(goals, target_date)
+
+    # 5. 确保固定任务（饮食记录）
+    ensure_fixed_tasks(tasks, goals)
+
+    # 6. 计算连击状态
+    streaks = compute_streaks_from_history()
+
+    # 7. 生成 md 内容
+    content = build_daily_md(target_date, tasks, goals, streaks, weekly_plan)
+
+    # 8. 写入文件
+    os.makedirs(os.path.dirname(today_path), exist_ok=True)
+    with open(today_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+
+    return {'ok': True, 'date': target_date, 'tasks': len(tasks)}
+
 # ─── HTTP 服务器（提供 JSON API + 静态文件） ───────────────────
 
 class DashboardHandler(SimpleHTTPRequestHandler):
@@ -3098,6 +3341,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self._send_json({'files': list_uploaded_files()})
         elif self.path == '/api/sync-queue':
             self._send_json(get_sync_queue())
+        elif self.path == '/api/generate-today':
+            result = generate_daily_plan()
+            self._send_json(result)
         else:
             # Map URL path to local file
             url_path = self.path.split('?')[0]  # strip query string
@@ -3187,6 +3433,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 if queue_id:
                     ack_sync_item(queue_id)
                 self._send_json({'ok': True})
+
+            elif self.path == '/api/generate-today':
+                date_param = body.get('date', '')
+                result = generate_daily_plan(date_param if date_param else None)
+                self._send_json(result)
 
             else:
                 self._send_json({'ok': False, 'error': '未知 API'}, 404)
