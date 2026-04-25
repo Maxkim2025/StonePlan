@@ -5,5 +5,12 @@
     "total": 6,
     "pct": 0,
     "sleep_hours": "8.5"
+  },
+  {
+    "date": "2026-04-26",
+    "done": 0,
+    "total": 6,
+    "pct": 0,
+    "sleep_hours": "-"
   }
 ]

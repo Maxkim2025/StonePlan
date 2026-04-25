@@ -13,7 +13,14 @@ import uuid
 import cgi
 import shutil
 import signal
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+# ─── 时区设置（北京时间 UTC+8） ─────────────────────
+TZ_CN = timezone(timedelta(hours=8))
+
+def now_cn():
+    """获取北京时间"""
+    return datetime.now(TZ_CN)
 from pathlib import Path
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -196,7 +203,7 @@ def _parse_plan_start_from_backward_table(table):
     """从倒推表的日期范围里提取起始日期（如 4/25~5/1）"""
     if not table or not table.get('rows'):
         return None
-    year = datetime.now().year
+    year = now_cn().year
     for row in table.get('rows', []):
         if len(row) < 2:
             continue
@@ -236,7 +243,7 @@ def _save_goal_snapshots(data):
 def _apply_goal_weekly_trend(goals):
     """为目标注入最近7天增量趋势，并持久化快照"""
     snapshots = _load_goal_snapshots()
-    today_str = datetime.now().strftime('%Y-%m-%d')
+    today_str = now_cn().strftime('%Y-%m-%d')
     goals_map = snapshots.setdefault('goals', {})
 
     for g in goals:
@@ -268,7 +275,7 @@ def _apply_goal_weekly_trend(goals):
             del history[:-120]
 
         # Compute 7-day trend from nearest snapshot >= 7 days ago
-        now_dt = datetime.now().date()
+        now_dt = now_cn().date()
         today_done = today_item['done']
         weekly_delta = 0
         weekly_days = 0
@@ -329,7 +336,7 @@ def upsert_daily_metric(today_data):
         return
     metrics = _load_daily_metrics()
     item = {
-        'date': today_data.get('date', datetime.now().strftime('%Y-%m-%d')),
+        'date': today_data.get('date', now_cn().strftime('%Y-%m-%d')),
         'done': int(today_data.get('done', 0)),
         'total': int(today_data.get('total', 0)),
         'pct': int(today_data.get('pct', 0)),
@@ -371,7 +378,7 @@ def _save_guardian_state(state):
         json.dump(state, f, ensure_ascii=False, indent=2)
 
 def _write_alert_file(alert):
-    dt = datetime.now()
+    dt = now_cn()
     alert_dir = os.path.join(BASE_DIR, "alerts", dt.strftime("%Y"), dt.strftime("%m"))
     os.makedirs(alert_dir, exist_ok=True)
     fname = f"alert-{dt.strftime('%Y-%m-%d')}-{alert['id']}.md"
@@ -403,8 +410,8 @@ type: guardian
     return path
 
 def list_today_alerts():
-    today = datetime.now().strftime('%Y-%m-%d')
-    alert_dir = os.path.join(BASE_DIR, "alerts", datetime.now().strftime("%Y"), datetime.now().strftime("%m"))
+    today = now_cn().strftime('%Y-%m-%d')
+    alert_dir = os.path.join(BASE_DIR, "alerts", now_cn().strftime("%Y"), now_cn().strftime("%m"))
     if not os.path.exists(alert_dir):
         return []
     items = []
@@ -433,7 +440,7 @@ def list_today_alerts():
 
 def run_guardian_checks(data):
     """按规则巡检并生成 alerts 文件（同一天同规则去重）"""
-    today = datetime.now().strftime('%Y-%m-%d')
+    today = now_cn().strftime('%Y-%m-%d')
     state = _load_guardian_state()
     fired_today = set(x for x in state.get('alerts', []) if x.startswith(today + ':'))
     new_alert_keys = []
@@ -452,7 +459,7 @@ def run_guardian_checks(data):
                 'risk': f"连续7天未推进进行中目标：{titles}",
                 'evidence': "sources: goals/active/*.md + inspection/goal-progress-snapshots.json",
                 'action': "明天中午前为每个停滞目标安排1个最小可执行动作（<=30分钟），并在今日任务中落地。",
-                'deadline': (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d 12:00'),
+                'deadline': (now_cn() + timedelta(days=1)).strftime('%Y-%m-%d 12:00'),
                 'cost': "长期目标继续停滞，截止风险快速上升，信心与执行惯性下降。"
             }
             created_files.append(_write_alert_file(alert))
@@ -470,7 +477,7 @@ def run_guardian_checks(data):
                 'risk': "同类阻塞信号累计达到 3 次以上，存在重复踩坑。",
                 'evidence': "sources: quicklog/*.md recent records include 失败/阻塞/卡住",
                 'action': "今晚写一份阻塞复盘清单（触发条件/解决动作/预防动作），并在明日任务中加入1条预防任务。",
-                'deadline': (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d 21:00'),
+                'deadline': (now_cn() + timedelta(days=1)).strftime('%Y-%m-%d 21:00'),
                 'cost': "问题将反复出现，执行效率下降，计划可信度被削弱。"
             }
             created_files.append(_write_alert_file(alert))
@@ -490,7 +497,7 @@ def run_guardian_checks(data):
                     'risk': f"最近14天平均完成率仅 {avg_pct:.1f}%，低于40%阈值。",
                     'evidence': "sources: inspection/daily-metrics.json last 14 entries",
                     'action': "本周进行重规划：每日任务缩减为3个关键动作，保留一个兜底任务，先恢复完成率到60%。",
-                    'deadline': (datetime.now() + timedelta(days=2)).strftime('%Y-%m-%d 22:00'),
+                    'deadline': (now_cn() + timedelta(days=2)).strftime('%Y-%m-%d 22:00'),
                     'cost': "长期低完成会导致计划失真，目标持续延期并引发挫败累积。"
                 }
                 created_files.append(_write_alert_file(alert))
@@ -512,7 +519,7 @@ def run_guardian_checks(data):
                 'risk': f"睡眠时长异常（{sleep_hours}h），超出健康阈值。",
                 'evidence': "sources: tasks/daily/* frontmatter sleep_hours",
                 'action': "明天优先修复作息：固定上床和起床时间，减少夜间高刺激活动。",
-                'deadline': (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d 23:00'),
+                'deadline': (now_cn() + timedelta(days=1)).strftime('%Y-%m-%d 23:00'),
                 'cost': "认知和执行稳定性下降，任务完成率和情绪波动风险升高。"
             }
             created_files.append(_write_alert_file(alert))
@@ -527,11 +534,11 @@ def run_guardian_checks(data):
 
 def write_daily_review(summary):
     """把每日总结落盘到 reviews 目录"""
-    date_str = summary.get('date') or datetime.now().strftime('%Y-%m-%d')
+    date_str = summary.get('date') or now_cn().strftime('%Y-%m-%d')
     try:
         dt = datetime.strptime(date_str, '%Y-%m-%d')
     except Exception:
-        dt = datetime.now()
+        dt = now_cn()
         date_str = dt.strftime('%Y-%m-%d')
     review_dir = os.path.join(BASE_DIR, "reviews", dt.strftime("%Y"), dt.strftime("%m"))
     os.makedirs(review_dir, exist_ok=True)
@@ -569,18 +576,18 @@ def write_daily_review(summary):
 
 def write_failure_review(payload):
     """写入失败复盘到 reviews，并同步一条 quicklog"""
-    date_str = payload.get('date') or datetime.now().strftime('%Y-%m-%d')
+    date_str = payload.get('date') or now_cn().strftime('%Y-%m-%d')
     try:
         dt = datetime.strptime(date_str, '%Y-%m-%d')
     except Exception:
-        dt = datetime.now()
+        dt = now_cn()
         date_str = dt.strftime('%Y-%m-%d')
 
     task_text = str(payload.get('task', '')).strip() or '未命名任务'
     slot = str(payload.get('slot', '')).strip()
     reason = str(payload.get('reason', '')).strip() or '未填写'
     action = str(payload.get('action', '')).strip() or '未填写'
-    now = datetime.now().strftime('%H:%M')
+    now = now_cn().strftime('%H:%M')
     rid = f"failure-{dt.strftime('%Y%m%d')}-{uuid.uuid4().hex[:6]}"
 
     review_dir = os.path.join(BASE_DIR, "reviews", dt.strftime("%Y"), dt.strftime("%m"))
@@ -718,7 +725,7 @@ def scan_goals():
     return goals
 
 def scan_today_tasks():
-    today = datetime.now().strftime('%Y-%m-%d')
+    today = now_cn().strftime('%Y-%m-%d')
     today_path = os.path.join(BASE_DIR, f"tasks/daily/{today[:4]}/{today[5:7]}/{today}.md")
 
     if not os.path.exists(today_path):
@@ -874,6 +881,9 @@ def scan_memory():
 
 def collect_data():
     """收集所有数据为 JSON"""
+    # 自动为今天生成计划（如果不存在）
+    auto_generate_today()
+    
     goals = scan_goals()
     today = scan_today_tasks()
     quicklog = scan_quicklog()
@@ -890,7 +900,7 @@ def collect_data():
     })
     guardian_alerts = list_today_alerts()
     return {
-        'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'generated_at': now_cn().strftime('%Y-%m-%d %H:%M:%S'),
         'goals': goals,
         'today': today,
         'quicklog': quicklog,
@@ -2854,7 +2864,7 @@ navPills.forEach(pill => {{
 
 def toggle_today_task(task_index):
     """切换今日任务状态（在时间轴表格中 ⬜↔✅）"""
-    today = datetime.now().strftime('%Y-%m-%d')
+    today = now_cn().strftime('%Y-%m-%d')
     today_path = os.path.join(BASE_DIR, f"tasks/daily/{today[:4]}/{today[5:7]}/{today}.md")
     if not os.path.exists(today_path):
         return {'ok': False, 'error': '今日任务文件不存在'}
@@ -3154,7 +3164,7 @@ def compute_streaks_from_history():
     if not os.path.exists(quicklog_dir):
         return streaks
 
-    today = datetime.now()
+    today = now_cn()
     for i in range(30):
         d = today - timedelta(days=i)
         date_str = d.strftime('%Y-%m-%d')
@@ -3234,10 +3244,23 @@ def build_daily_md(target_date, tasks, goals, streaks, weekly_plan):
 
     return '\n'.join(lines)
 
+def auto_generate_today():
+    """每次 collect_data 时自动检查，如果今天没有计划文件则自动生成"""
+    today = now_cn().strftime('%Y-%m-%d')
+    today_path = os.path.join(BASE_DIR, f"tasks/daily/{today[:4]}/{today[5:7]}/{today}.md")
+    if os.path.exists(today_path):
+        return
+    try:
+        result = generate_daily_plan(today)
+        if result.get('ok'):
+            print(f'[auto] 已自动生成今日计划: {today} ({result["tasks"]}个任务)')
+    except Exception as e:
+        print(f'[auto] 自动生成今日计划失败: {e}')
+
 def generate_daily_plan(target_date=None):
     """根据活跃目标和周计划自动生成每日任务 md 文件"""
     if target_date is None:
-        target_date = datetime.now().strftime('%Y-%m-%d')
+        target_date = now_cn().strftime('%Y-%m-%d')
 
     # 检查是否已存在
     date_parts = target_date.split('-')
