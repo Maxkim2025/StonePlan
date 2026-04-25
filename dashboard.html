@@ -946,7 +946,7 @@
 <script>
 // ─── 初始数据（静态嵌入） ─────────────────────────
 let dashboardData = {
-  "generated_at": "2026-04-26 01:25:11",
+  "generated_at": "2026-04-26 01:40:23",
   "goals": [
     {
       "id": "goal-ai-interview",
@@ -1581,32 +1581,32 @@ let dashboardData = {
     "tasks": [
       {
         "done": false,
-        "text": "🥗 记录早餐（食物+估算热量，目标≤500大卡）",
+        "text": "🥗 记录早餐（≤500大卡）",
         "slot": "起床后"
       },
       {
         "done": false,
-        "text": "📖 背30个英语单词（用APP或单词本）",
+        "text": "📖 背30个英语单词",
         "slot": "上午"
       },
       {
         "done": false,
-        "text": "📚 阅读健身参考资料，了解热量计算方法",
+        "text": "🏋️ **健身房训练：腿臀+腹**（40-60min）",
         "slot": "下午"
       },
       {
         "done": false,
-        "text": "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）",
+        "text": "🤖 学习AI面试知识点1：LLM基础原理",
         "slot": "下午"
       },
       {
         "done": false,
-        "text": "✍️ 做1篇四级阅读理解（找回手感）",
+        "text": "🎧 做1篇四级听力练习",
         "slot": "晚上"
       },
       {
         "done": false,
-        "text": "🥗 记录晚餐（食物+估算热量，目标≤500大卡）",
+        "text": "🥗 记录晚餐（≤500大卡）",
         "slot": "睡前"
       }
     ],
@@ -1631,42 +1631,42 @@ let dashboardData = {
         ],
         [
           "起床后",
-          "🥗 记录早餐（食物+估算热量，目标≤500大卡）",
+          "🥗 记录早餐（≤500大卡）",
           "⬜",
           "10",
           "🎯 减脂"
         ],
         [
           "上午",
-          "📖 背30个英语单词（用APP或单词本）",
+          "📖 背30个英语单词",
           "⬜",
           "15",
           "🎯 四级"
         ],
         [
           "下午",
-          "📚 阅读健身参考资料，了解热量计算方法",
+          "🏋️ **健身房训练：腿臀+腹**（40-60min）",
           "⬜",
-          "25",
+          "30",
           "🎯 减脂"
         ],
         [
           "下午",
-          "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）",
+          "🤖 学习AI面试知识点1：LLM基础原理",
           "⬜",
-          "40",
+          "35",
           "🎯 AI面试"
         ],
         [
           "晚上",
-          "✍️ 做1篇四级阅读理解（找回手感）",
+          "🎧 做1篇四级听力练习",
           "⬜",
           "20",
           "🎯 四级"
         ],
         [
           "睡前",
-          "🥗 记录晚餐（食物+估算热量，目标≤500大卡）",
+          "🥗 记录晚餐（≤500大卡）",
           "⬜",
           "10",
           "🎯 减脂"
@@ -2519,7 +2519,40 @@ let dashboardData = {
   },
   "memory": [],
   "guardian_alerts_created": [],
-  "guardian_alerts": []
+  "guardian_alerts": [],
+  "goal_paces": {
+    "goal-ai-interview": {
+      "goal_id": "goal-ai-interview",
+      "title": "AI应用开发面试准备",
+      "deadline": "2026-06-30",
+      "remaining_days": 64,
+      "urgency": "normal",
+      "done_milestones": 0,
+      "remaining_milestones": 6,
+      "weekly_milestones_needed": 1
+    },
+    "goal-cet4": {
+      "goal_id": "goal-cet4",
+      "title": "四级英语考试",
+      "deadline": "2026-06-13",
+      "remaining_days": 47,
+      "urgency": "normal",
+      "daily_words": 41,
+      "vocab_gap": 1500,
+      "current_vocab": 2000,
+      "english_intensity": "normal"
+    },
+    "goal-fitness": {
+      "goal_id": "goal-fitness",
+      "title": "减脂到140斤",
+      "deadline": "2026-05-31",
+      "remaining_days": 34,
+      "urgency": "normal",
+      "current_weight": 146.5,
+      "weight_to_lose": 6.5,
+      "weekly_loss_needed": 1.34
+    }
+  }
 };
 let focusTimerState = null;
 let focusSession = null;
@@ -2534,7 +2567,7 @@ function render(data) {
   renderStats(data);
   renderTimeline(data);
   renderGoals(data.goals);
-  renderToday(data.today);
+  renderToday(data.today, data.goal_paces || {});
   renderQuicklog(data.quicklog);
   renderWeekly(data.weekly_plan);
   renderHealth(data.health);
@@ -3054,7 +3087,7 @@ function renderGoals(goals) {
   document.getElementById('goalsGrid').innerHTML = html;
 }
 
-function renderToday(today) {
+function renderToday(today, goalPaces) {
   const el = document.getElementById('todaySection');
   if (!today) {
     el.innerHTML = '<p class="empty">暂无今日任务</p>';
@@ -3066,6 +3099,24 @@ function renderToday(today) {
   // Set date in title
   const dateEl = document.getElementById('todayDate');
   if (dateEl) dateEl.textContent = today.date;
+
+  // Pace hint: show goal progress awareness
+  const cet4 = goalPaces['goal-cet4'] || {};
+  const ai = goalPaces['goal-ai-interview'] || {};
+  if (cet4.remaining_days || ai.remaining_milestones !== undefined) {
+    const parts = [];
+    if (cet4.remaining_days) {
+      const dailyW = cet4.daily_words || 30;
+      const urgencyLabel = cet4.urgency === 'critical' ? ' [CRITICAL]' : cet4.urgency === 'urgent' ? ' [URGENT]' : '';
+      parts.push('📖 四级：距考试' + cet4.remaining_days + '天，建议每天背' + dailyW + '词' + urgencyLabel);
+    }
+    if (ai.remaining_milestones !== undefined) {
+      parts.push('🤖 AI面试：剩余' + ai.remaining_milestones + '个里程碑');
+    }
+    if (parts.length > 0) {
+      html += '<p class="pace-hint" style="font-size:12px;color:#f59e0b;margin:4px 0 8px;">' + parts.join(' | ') + '</p>';
+    }
+  }
 
   // Time table
   if (today.time_table) {

@@ -899,6 +899,14 @@ def collect_data():
         'quicklog': quicklog,
     })
     guardian_alerts = list_today_alerts()
+
+    # 计算各目标的进度感知
+    goal_paces = {}
+    for g in goals:
+        pace = compute_goal_pace(g)
+        if pace:
+            goal_paces[pace['goal_id']] = pace
+
     return {
         'generated_at': now_cn().strftime('%Y-%m-%d %H:%M:%S'),
         'goals': goals,
@@ -910,6 +918,7 @@ def collect_data():
         'memory': memory,
         'guardian_alerts_created': guardian_files,
         'guardian_alerts': guardian_alerts,
+        'goal_paces': goal_paces,
     }
 
 # ─── HTML 生成 ──────────────────────────────────────────────────
@@ -1882,7 +1891,7 @@ function render(data) {{
   renderStats(data);
   renderTimeline(data);
   renderGoals(data.goals);
-  renderToday(data.today);
+  renderToday(data.today, data.goal_paces || {{}});
   renderQuicklog(data.quicklog);
   renderWeekly(data.weekly_plan);
   renderHealth(data.health);
@@ -2402,7 +2411,7 @@ function renderGoals(goals) {{
   document.getElementById('goalsGrid').innerHTML = html;
 }}
 
-function renderToday(today) {{
+function renderToday(today, goalPaces) {{
   const el = document.getElementById('todaySection');
   if (!today) {{
     el.innerHTML = '<p class="empty">暂无今日任务</p>';
@@ -2414,6 +2423,24 @@ function renderToday(today) {{
   // Set date in title
   const dateEl = document.getElementById('todayDate');
   if (dateEl) dateEl.textContent = today.date;
+
+  // Pace hint: show goal progress awareness
+  const cet4 = goalPaces['goal-cet4'] || {{}};
+  const ai = goalPaces['goal-ai-interview'] || {{}};
+  if (cet4.remaining_days || ai.remaining_milestones !== undefined) {{
+    const parts = [];
+    if (cet4.remaining_days) {{
+      const dailyW = cet4.daily_words || 30;
+      const urgencyLabel = cet4.urgency === 'critical' ? ' [CRITICAL]' : cet4.urgency === 'urgent' ? ' [URGENT]' : '';
+      parts.push('📖 四级：距考试' + cet4.remaining_days + '天，建议每天背' + dailyW + '词' + urgencyLabel);
+    }}
+    if (ai.remaining_milestones !== undefined) {{
+      parts.push('🤖 AI面试：剩余' + ai.remaining_milestones + '个里程碑');
+    }}
+    if (parts.length > 0) {{
+      html += '<p class="pace-hint" style="font-size:12px;color:#f59e0b;margin:4px 0 8px;">' + parts.join(' | ') + '</p>';
+    }}
+  }}
 
   // Time table
   if (today.time_table) {{
@@ -3130,16 +3157,193 @@ def extract_day_tasks_from_weekly(weekly_content, day_num):
                     })
     return tasks
 
-def generate_tasks_from_goals(goals, target_date):
-    """没有周计划时，根据目标倒推计划表生成任务"""
+def compute_goal_pace(goal):
+    """根据目标进度计算每日所需量"""
+    goal_file = goal.get('file', '')
+    if not goal_file:
+        return {}
+
+    fpath = os.path.join(BASE_DIR, 'goals', 'active', goal_file)
+    if not os.path.exists(fpath):
+        return {}
+
+    content = open(fpath, encoding='utf-8').read()
+    fm = parse_frontmatter(content)
+
+    deadline_str = fm.get('time', {}).get('deadline', '')
+    if not deadline_str:
+        deadline_str = fm.get('time_deadline', fm.get('deadline', ''))
+
+    # 解析 deadline（可能是 "2026-06-13" 或 "2026-06-13（六级第二周周六，四级同天）"）
+    deadline_clean = deadline_str.split('\uff08')[0].split('(')[0].strip()[:10]
+    try:
+        deadline = datetime.strptime(deadline_clean, '%Y-%m-%d').replace(tzinfo=TZ_CN)
+    except Exception:
+        return {}
+
+    remaining_days = max(1, (deadline - now_cn()).days)
+    goal_id = fm.get('id', '')
+
+    pace = {
+        'goal_id': goal_id,
+        'title': fm.get('title', ''),
+        'deadline': deadline_clean,
+        'remaining_days': remaining_days,
+        'urgency': 'normal',  # normal / urgent / critical
+    }
+
+    if remaining_days <= 7:
+        pace['urgency'] = 'critical'
+    elif remaining_days <= 21:
+        pace['urgency'] = 'urgent'
+
+    # 根据目标类型计算具体每日量
+    if goal_id == 'goal-cet4':
+        # 四级：根据词汇差距计算每日背词量
+        target_vocab = 3500
+        current_vocab = 2000  # 保守估计
+        vocab_gap = target_vocab - current_vocab
+        # 考虑遗忘率（约30%），实际需要背更多
+        effective_gap = int(vocab_gap * 1.3)
+        daily_words = max(30, effective_gap // remaining_days)
+        pace['daily_words'] = daily_words
+        pace['vocab_gap'] = vocab_gap
+        pace['current_vocab'] = current_vocab
+
+        # 根据剩余天数调整英语任务
+        if remaining_days <= 14:
+            pace['english_intensity'] = 'sprint'  # 冲刺：真题为主
+        elif remaining_days <= 30:
+            pace['english_intensity'] = 'accelerated'  # 加速
+        else:
+            pace['english_intensity'] = 'normal'
+
+    elif goal_id == 'goal-ai-interview':
+        # AI面试：根据里程碑进度计算
+        total_milestones = 6
+        # 从 md 内容中统计已完成的里程碑
+        body = parse_body(content)
+        done_milestones = len(re.findall(r'- \[x\]', body))
+        remaining_milestones = total_milestones - done_milestones
+        pace['done_milestones'] = done_milestones
+        pace['remaining_milestones'] = remaining_milestones
+        pace['weekly_milestones_needed'] = max(1, remaining_milestones / max(1, remaining_days / 7))
+
+    elif goal_id == 'goal-fitness':
+        # 减脂：根据体重差距计算
+        current_weight = 146.5  # 默认值
+        target_weight = 140
+        weight_to_lose = current_weight - target_weight
+        weekly_loss_needed = weight_to_lose / max(1, remaining_days / 7)
+        pace['current_weight'] = current_weight
+        pace['weight_to_lose'] = weight_to_lose
+        pace['weekly_loss_needed'] = round(weekly_loss_needed, 2)
+
+    return pace
+
+
+def generate_tasks_from_goals(goals, target_date, day_num=None):
+    """没有周计划时，根据目标倒推计划表和 day_num 生成任务"""
+    if day_num is None:
+        dt = datetime.strptime(target_date, '%Y-%m-%d')
+        week_day_map = {'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4,
+                        'Friday': 5, 'Saturday': 6, 'Sunday': 7}
+        day_num = week_day_map.get(dt.strftime('%A'), 1)
+
     tasks = []
-    # 固定任务模板
-    tasks.append({'time': '起床后', 'text': '🥗 记录早餐（食物+估算热量，目标≤500大卡）', 'xp': '10', 'goal': '减脂'})
-    tasks.append({'time': '上午', 'text': '📖 背30个英语单词（用APP或单词本）', 'xp': '15', 'goal': '四级'})
-    tasks.append({'time': '下午', 'text': '📚 阅读健身参考资料，了解热量计算方法', 'xp': '25', 'goal': '减脂'})
-    tasks.append({'time': '下午', 'text': '🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）', 'xp': '40', 'goal': 'AI面试'})
-    tasks.append({'time': '晚上', 'text': '✍️ 做1篇四级阅读理解（找回手感）', 'xp': '20', 'goal': '四级'})
-    tasks.append({'time': '睡前', 'text': '🥗 记录晚餐（食物+估算热量，目标≤500大卡）', 'xp': '10', 'goal': '减脂'})
+    # 固定任务：饮食记录
+    tasks.append({'time': '起床后', 'text': '🥗 记录早餐（≤500大卡）', 'xp': '10', 'goal': '减脂'})
+
+    # 计算各目标的进度感知
+    paces = {}
+    for g in goals:
+        pace = compute_goal_pace(g)
+        if pace:
+            paces[pace['goal_id']] = pace
+
+    cet4_pace = paces.get('goal-cet4', {})
+    ai_pace = paces.get('goal-ai-interview', {})
+    fitness_pace = paces.get('goal-fitness', {})
+
+    # 英语任务：根据进度动态调整背词量
+    daily_words = cet4_pace.get('daily_words', 30)
+    english_intensity = cet4_pace.get('english_intensity', 'normal')
+    remaining_days_cet4 = cet4_pace.get('remaining_days', 49)
+
+    if english_intensity == 'sprint':
+        # 冲刺期：以真题为主
+        tasks.append({'time': '上午', 'text': '📝 做1套四级真题（阅读+听力+翻译）', 'xp': '50', 'goal': '四级'})
+        tasks.append({'time': '上午', 'text': '📖 背' + str(daily_words) + '个高频错词', 'xp': '15', 'goal': '四级'})
+    elif english_intensity == 'accelerated':
+        # 加速期：增加背词量
+        tasks.append({'time': '上午', 'text': '📖 背' + str(daily_words) + '个英语单词（加速：距考试' + str(remaining_days_cet4) + '天）', 'xp': '20', 'goal': '四级'})
+    else:
+        # 正常期
+        tasks.append({'time': '上午', 'text': '📖 背' + str(daily_words) + '个英语单词', 'xp': '15', 'goal': '四级'})
+
+    # 训练日模板（Day2/3/4/6 = 周六/周日/周一/周三）
+    # 注意：训练安排灵活，由用户当天指定，这里只提供默认模板
+    training_days = {
+        2: ('健身房训练：背+肩后束+肱二头', '引体/高位下拉/划船 + 飞鸟 + 弯举'),
+        3: ('健身房训练：胸+肩前中束+肱三头', '卧推/哑铃推胸 + 侧平举 + 臂屈伸'),
+        4: ('健身房训练：腿臀+腹', '深蹲/腿举/硬拉 + 臀桥 + 卷腹'),
+        6: ('健身房训练：背+肩后束+肱二头', '引体/高位下拉/划船 + 飞鸟 + 弯举'),
+    }
+
+    # 有氧/休息日（练腿后第二天自动变为有氧日）
+    cardio_days = {3, 5}  # 周日、周二
+
+    if day_num in training_days:
+        name, detail = training_days[day_num]
+        tasks.append({'time': '下午', 'text': f'🏋️ **{name}**（40-60min）', 'xp': '30', 'goal': '减脂'})
+        tasks.append({'time': '下午', 'text': f'  具体动作：{detail}，6-8组', 'xp': '0', 'goal': '减脂'})
+    elif day_num in cardio_days:
+        # 有氧日（周日、周二）
+        tasks.append({'time': '下午', 'text': '🚶 轻有氧：快走20分钟（消耗约130大卡）', 'xp': '20', 'goal': '减脂'})
+    elif day_num == 7:
+        # 复盘日（周四）
+        tasks.append({'time': '早晨', 'text': '⚖️ 空腹称重记录', 'xp': '5', 'goal': '减脂'})
+        tasks.append({'time': '上午', 'text': '📝 完成四级真题摸底', 'xp': '50', 'goal': '四级'})
+        tasks.append({'time': '下午', 'text': '📊 执行周复盘', 'xp': '30', 'goal': '系统'})
+
+    # 非复盘日的学习任务
+    if day_num != 7:
+        ai_remaining = ai_pace.get('remaining_milestones', 6)
+        ai_urgency = ai_pace.get('urgency', 'normal')
+
+        if ai_urgency == 'critical':
+            ai_text = '🤖 AI面试冲刺：模拟面试/查漏补缺'
+            ai_xp = '50'
+        elif ai_urgency == 'urgent':
+            ai_text = '🤖 学习AI面试知识点（剩余' + str(ai_remaining) + '个里程碑）'
+            ai_xp = '35'
+        else:
+            ai_tasks_map = {
+                1: ('🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）', '40'),
+                2: ('🤖 学习AI面试知识点1：LLM基础原理', '35'),
+                3: ('🤖 学习AI面试知识点2：Prompt Engineering', '35'),
+                4: ('📋 制定个人饮食方案（基于热量预算：1900大卡/天）', '30'),
+                5: ('🤖 AI知识点小练习/实践', '35'),
+                6: ('📖 复习本周AI知识点（LLM基础+Prompt Engineering）', '25'),
+            }
+            ai_text, ai_xp = ai_tasks_map.get(day_num, ('🤖 学习AI面试知识点', '35'))
+
+        tasks.append({'time': '下午', 'text': ai_text, 'xp': ai_xp, 'goal': 'AI面试'})
+
+        # 英语任务交替阅读/听力
+        if day_num in (2, 4, 6):
+            tasks.append({'time': '晚上', 'text': '🎧 做1篇四级听力练习', 'xp': '20', 'goal': '四级'})
+        else:
+            tasks.append({'time': '晚上', 'text': '✍️ 做1篇四级阅读理解', 'xp': '20', 'goal': '四级'})
+
+    # 非训练日/非有氧日/非复盘日：可以多安排学习任务
+    if day_num not in training_days and day_num not in cardio_days and day_num != 7:
+        # 没有训练，精力更多，可以加额外学习任务
+        if english_intensity in ('accelerated', 'sprint'):
+            tasks.append({'time': '下午', 'text': '✍️ 四级写作/翻译练习', 'xp': '20', 'goal': '四级'})
+
+    # 固定任务：晚餐
+    tasks.append({'time': '睡前', 'text': '🥗 记录晚餐（≤500大卡）', 'xp': '10', 'goal': '减脂'})
     return tasks
 
 def ensure_fixed_tasks(tasks, goals):
@@ -3289,13 +3493,13 @@ def generate_daily_plan(target_date=None):
         tasks = extract_day_tasks_from_weekly(weekly_plan, day_num)
         # 如果周计划中今天的任务太少（<=3），补充默认任务
         if len(tasks) <= 3:
-            default_tasks = generate_tasks_from_goals(goals, target_date)
+            default_tasks = generate_tasks_from_goals(goals, target_date, day_num)
             existing_texts = {t['text'] for t in tasks}
             for dt in default_tasks:
                 if dt['text'] not in existing_texts:
                     tasks.append(dt)
     else:
-        tasks = generate_tasks_from_goals(goals, target_date)
+        tasks = generate_tasks_from_goals(goals, target_date, day_num)
 
     # 5. 确保固定任务（饮食记录）
     ensure_fixed_tasks(tasks, goals)
