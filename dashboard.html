@@ -1,0 +1,2559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🪨 Stone Plan Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .header h1 {
+    font-size: 32px;
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+  }
+  .header .subtitle {
+    color: #64748b;
+    font-size: 14px;
+  }
+  .header .live-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+  .header .update-time {
+    color: #475569;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Layout */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #334155;
+    transition: border-color 0.3s;
+  }
+  .card:hover { border-color: #475569; }
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #f1f5f9;
+  }
+  .card-title .icon { font-size: 18px; }
+  .full-width { grid-column: 1 / -1; }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .stat-item {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 16px 24px;
+    flex: 1;
+    min-width: 160px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+  }
+
+  /* Goals */
+  .goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+  .goal-card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid #334155;
+    border-left: 4px solid #3b82f6;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .goal-card:hover { transform: translateY(-2px); border-color: #475569; }
+  .goal-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .goal-emoji { font-size: 28px; }
+  .goal-title { font-size: 15px; font-weight: 600; flex: 1; color: #f1f5f9; }
+  .goal-status {
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    color: white;
+    font-weight: 500;
+  }
+  .goal-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .goal-tags { margin-top: 8px; }
+  .tag {
+    display: inline-block;
+    background: #334155;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-right: 4px;
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 6px;
+    background: #334155;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-bar.large { height: 10px; }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    transition: width 0.5s ease;
+  }
+  .progress-fill.green { background: linear-gradient(90deg, #10b981, #34d399); }
+  .progress-fill.red { background: linear-gradient(90deg, #ef4444, #f87171); }
+  .progress-fill.amber { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .progress-label {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+  }
+  .progress-section { margin: 10px 0; }
+
+  /* Milestones */
+  .milestones { margin-top: 8px; }
+  .ms-item {
+    font-size: 12px;
+    padding: 2px 0;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 3px 6px;
+    margin: 1px 0;
+    transition: background 0.2s;
+    user-select: none;
+  }
+  .ms-item:hover { background: #334155; }
+  .ms-item:active { transform: scale(0.98); }
+  .ms-item.done { color: #475569; text-decoration: line-through; }
+  .ms-item.syncing { opacity: 0.5; pointer-events: none; }
+
+  /* Tasks */
+  .task-list { margin-top: 10px; }
+  .task-item {
+    font-size: 13px;
+    padding: 6px 10px;
+    color: #cbd5e1;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+  }
+  .task-item:hover { background: #334155; }
+  .task-item:active { transform: scale(0.98); }
+  .task-item.done { color: #475569; text-decoration: line-through; }
+  .task-item.syncing { opacity: 0.5; pointer-events: none; }
+  .task-item .check-icon { transition: transform 0.2s; }
+  .task-item:hover .check-icon { transform: scale(1.2); }
+  .today-info {
+    display: flex;
+    gap: 20px;
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .today-info span {
+    background: #334155;
+    padding: 4px 12px;
+    border-radius: 8px;
+  }
+
+  /* Time table */
+  .time-table { overflow-x: auto; }
+  .time-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .time-table th {
+    background: #334155;
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  .time-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #1e293b;
+  }
+  .time-table td.task-done { color: #475569; text-decoration: line-through; }
+  .time-table tr:hover { background: rgba(51,65,85,0.5); }
+
+  /* Data tables */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  .data-table th {
+    background: #334155;
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 11px;
+    color: #94a3b8;
+  }
+  .data-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #1e293b;
+    color: #cbd5e1;
+  }
+  .data-table tr:hover { background: rgba(51,65,85,0.5); }
+  .plan-table td:first-child { white-space: nowrap; }
+
+  /* QuickLog */
+  .ql-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1e293b;
+    font-size: 13px;
+  }
+  .ql-item:last-child { border-bottom: none; }
+  .ql-emoji { font-size: 18px; }
+  .ql-text { flex: 1; color: #cbd5e1; }
+  .ql-meta { color: #475569; font-size: 11px; white-space: nowrap; }
+
+  /* Timeline */
+  .timeline {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 15px 0;
+    position: relative;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 21px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #334155;
+  }
+  .tl-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+    text-align: center;
+    z-index: 1;
+  }
+  .tl-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #334155;
+    border: 3px solid #475569;
+  }
+  .tl-dot.now {
+    background: #3b82f6;
+    border-color: #60a5fa;
+    box-shadow: 0 0 12px rgba(59,130,246,0.6);
+  }
+  .tl-dot.deadline {
+    background: #ef4444;
+    border-color: #f87171;
+    box-shadow: 0 0 12px rgba(239,68,68,0.4);
+  }
+  .tl-label { line-height: 1.3; }
+  .tl-label small { color: #475569; }
+
+  .plan-header {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #60a5fa;
+  }
+
+  /* Backward plan table */
+  .backward-plan { margin-top: 10px; }
+  .backward-plan table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .backward-plan th {
+    background: #334155;
+    padding: 5px 6px;
+    text-align: left;
+    font-weight: 500;
+    color: #94a3b8;
+    font-size: 10px;
+  }
+  .backward-plan td {
+    padding: 5px 6px;
+    border-bottom: 1px solid #1e293b;
+    color: #cbd5e1;
+    font-size: 11px;
+  }
+  .backward-plan tr:hover { background: rgba(51,65,85,0.5); }
+
+  .empty {
+    text-align: center;
+    color: #475569;
+    padding: 30px;
+    font-size: 13px;
+  }
+
+  .refresh-bar {
+    text-align: center;
+    color: #475569;
+    font-size: 12px;
+    margin-top: 24px;
+    padding: 12px;
+    background: #1e293b;
+    border-radius: 8px;
+    border: 1px solid #334155;
+  }
+  .refresh-bar code {
+    background: #334155;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: #94a3b8;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+  /* Fade-in animation */
+  .fade-in {
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .goals-grid { grid-template-columns: 1fr; }
+    .stats-bar { flex-direction: column; }
+  }
+
+  /* ─── 手机适配 (< 640px) ─── */
+  @media (max-width: 640px) {
+    .container { padding: 12px; }
+    .header h1 { font-size: 24px; }
+    .card { padding: 14px; border-radius: 10px; }
+    .card-title { font-size: 14px; margin-bottom: 12px; }
+
+    /* 统计栏：2x2 网格 */
+    .stats-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .stat-item { padding: 12px 16px; min-width: 0; }
+    .stat-value { font-size: 22px; }
+    .stat-label { font-size: 11px; }
+
+    /* 时间线：纵向排列 */
+    .timeline {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+      padding-left: 20px;
+    }
+    .timeline::before {
+      top: 0; bottom: 0;
+      left: 6px;
+      width: 2px;
+      right: auto;
+    }
+    .tl-item {
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+    }
+    .tl-dot { width: 12px; height: 12px; flex-shrink: 0; }
+    .tl-label { font-size: 13px; }
+
+    /* 目标卡片 */
+    .goal-card { padding: 14px; }
+    .goal-emoji { font-size: 22px; }
+    .goal-title { font-size: 14px; }
+    .goal-meta { flex-direction: column; gap: 4px; font-size: 11px; }
+
+    /* 任务 */
+    .task-item {
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+    .task-item .check-icon { font-size: 18px; }
+
+    /* 里程碑 */
+    .ms-item { font-size: 13px; padding: 6px 8px; }
+
+    /* 今日信息 */
+    .today-info {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .today-info span { padding: 6px 12px; font-size: 12px; }
+
+    /* 表格 */
+    .time-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .time-table table { font-size: 12px; }
+    .time-table th, .time-table td { padding: 6px 8px; white-space: nowrap; }
+    .data-table { font-size: 11px; }
+    .data-table th, .data-table td { padding: 5px 6px; }
+    .plan-table td:first-child { white-space: normal; }
+
+    /* QuickLog */
+    .ql-item { padding: 10px 0; font-size: 13px; }
+    .ql-meta { font-size: 10px; }
+
+    /* 进度条 */
+    .progress-bar.large { height: 8px; }
+
+    /* Grid 间距缩小 */
+    .grid { gap: 14px; }
+
+    /* 刷新栏 */
+    .refresh-bar { font-size: 11px; padding: 10px; }
+  }
+
+  /* ─── 超小屏 (< 380px) ─── */
+  @media (max-width: 380px) {
+    .container { padding: 8px; }
+    .header h1 { font-size: 20px; }
+    .stats-bar { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .stat-value { font-size: 20px; }
+    .goal-header { flex-wrap: wrap; }
+    .goal-title { font-size: 13px; }
+  }
+
+  /* ─── Quick Nav ─── */
+  .quick-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    gap: 6px;
+    padding: 10px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    background: #0f172a;
+  }
+  .quick-nav::-webkit-scrollbar { display: none; }
+  .nav-pill {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-decoration: none;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    scroll-margin-top: 60px;
+  }
+  .nav-pill:hover {
+    background: rgba(255,255,255,0.1);
+    color: #e2e8f0;
+  }
+  .nav-pill.active {
+    background: rgba(102, 126, 234, 0.15);
+    color: #667eea;
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🪨 Stone Plan</h1>
+    <div class="subtitle"><span class="live-dot"></span>AI 驱动的生活操作系统</div>
+    <div class="update-time" id="updateTime"></div>
+  </div>
+
+  <!-- Quick Nav -->
+  <div class="quick-nav" id="quickNav">
+    <a href="#section-timeline" class="nav-pill">📅 时间线</a>
+    <a href="#section-today" class="nav-pill active">📋 今日任务</a>
+    <a href="#section-goals" class="nav-pill">🎯 目标</a>
+    <a href="#section-quicklog" class="nav-pill">📝 记录</a>
+    <a href="#section-plan" class="nav-pill">📊 计划</a>
+    <a href="#section-health" class="nav-pill">🏃 健康</a>
+    <a href="#section-finance" class="nav-pill">💰 财务</a>
+    <a href="#" class="nav-pill" id="backToTop" style="display:none">⬆️ 顶部</a>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- Timeline -->
+  <div class="card full-width" id="section-timeline">
+    <div class="card-title"><span class="icon">📅</span> 时间线</div>
+    <div id="timeline"></div>
+  </div>
+
+  <div class="grid">
+    <!-- Today -->
+    <div class="card" id="section-today">
+      <div class="card-title"><span class="icon">📋</span> 今日任务 <span id="todayDate" style="font-size:12px;color:#94a3b8;font-weight:400;margin-left:8px;"></span></div>
+      <div id="todaySection"></div>
+    </div>
+
+    <!-- QuickLog -->
+    <div class="card" id="section-quicklog">
+      <div class="card-title"><span class="icon">📝</span> 最近记录</div>
+      <div id="quicklogSection"></div>
+    </div>
+
+    <!-- Goals -->
+    <div class="card full-width" id="section-goals">
+      <div class="card-title"><span class="icon">🎯</span> 目标总览</div>
+      <div class="goals-grid" id="goalsGrid"></div>
+    </div>
+
+    <!-- Weekly Plan -->
+    <div class="card full-width" id="section-plan">
+      <div class="card-title"><span class="icon">📊</span> 本周计划</div>
+      <div id="weeklySection"></div>
+    </div>
+
+    <!-- Health -->
+    <div class="card" id="section-health">
+      <div class="card-title"><span class="icon">🏃</span> 健康数据</div>
+      <div id="healthSection"></div>
+    </div>
+
+    <!-- Finance -->
+    <div class="card" id="section-finance">
+      <div class="card-title"><span class="icon">💰</span> 财务数据</div>
+      <div id="financeSection"></div>
+    </div>
+  </div>
+
+  <div class="refresh-bar">
+    🔄 每 10 秒自动刷新 · 运行 <code>python3 generate-dashboard.py --serve</code> 启动实时服务
+  </div>
+</div>
+
+<script>
+// ─── 初始数据（静态嵌入） ─────────────────────────
+let dashboardData = {
+  "generated_at": "2026-04-25 13:56:21",
+  "goals": [
+    {
+      "id": "goal-ai-interview",
+      "title": "AI应用开发面试准备",
+      "emoji": "🎯",
+      "status": "进行中",
+      "status_color": "#3b82f6",
+      "deadline": "2026-06-30",
+      "remaining": "66",
+      "progress": "未开始",
+      "milestones_done": 0,
+      "milestones_total": 11,
+      "milestone_pct": 0,
+      "file": "goal-ai-interview.md",
+      "tags": [
+        "AI",
+        "面试",
+        "开发",
+        "学习"
+      ],
+      "tasks": [
+        {
+          "done": false,
+          "text": "掌握 ≥ 15个核心知识点（LLM、Prompt、RAG、Agent、向量数据库等）"
+        },
+        {
+          "done": false,
+          "text": "完成 ≥ 3个实战项目"
+        },
+        {
+          "done": false,
+          "text": "算法刷题 ≥ 50道"
+        },
+        {
+          "done": false,
+          "text": "完成 ≥ 5次模拟面试"
+        },
+        {
+          "done": false,
+          "text": "能流畅回答常见面试问题（自我评估通过率 ≥ 80%）"
+        },
+        {
+          "done": false,
+          "text": "知识点清单完成（W1）"
+        },
+        {
+          "done": false,
+          "text": "掌握8个核心知识点（W3结束）"
+        },
+        {
+          "done": false,
+          "text": "完成3个实战项目（W6结束）"
+        },
+        {
+          "done": false,
+          "text": "算法刷题50道（W8结束）"
+        },
+        {
+          "done": false,
+          "text": "完成5次模拟面试（W9结束）"
+        },
+        {
+          "done": false,
+          "text": "面试准备就绪（6月30日）"
+        }
+      ],
+      "tables": [
+        {
+          "headers": [
+            "周次",
+            "日期范围",
+            "重点",
+            "每日任务量",
+            "检查标准"
+          ],
+          "rows": [
+            [
+              "------",
+              "---------",
+              "------",
+              "-----------",
+              "---------"
+            ],
+            [
+              "W1",
+              "4/25~5/1",
+              "梳理知识点",
+              "梳理完整清单+学习2个知识点",
+              "知识点清单完成"
+            ],
+            [
+              "W2",
+              "5/2~5/8",
+              "核心知识（上）",
+              "学习3个知识点+1个小练习",
+              "掌握5个知识点"
+            ],
+            [
+              "W3",
+              "5/9~5/15",
+              "核心知识（下）",
+              "学习3个知识点+1个小练习",
+              "掌握8个知识点"
+            ],
+            [
+              "W4",
+              "5/16~5/22",
+              "项目实战1",
+              "完成第1个实战项目",
+              "项目1完成可演示"
+            ],
+            [
+              "W5",
+              "5/23~5/29",
+              "项目实战2",
+              "完成第2个实战项目",
+              "项目2完成可演示"
+            ],
+            [
+              "W6",
+              "5/30~6/5",
+              "项目实战3+算法",
+              "完成第3个项目+刷15题",
+              "项目3完成+15题"
+            ],
+            [
+              "W7",
+              "6/6~6/12",
+              "算法+模拟面试",
+              "刷20题+2次模拟面试",
+              "模拟面试通过"
+            ],
+            [
+              "W8",
+              "6/13~6/19",
+              "查漏补缺",
+              "补弱项+刷15题+2次模拟",
+              "弱项补齐"
+            ],
+            [
+              "W9",
+              "6/20~6/30",
+              "冲刺",
+              "复习+最终模拟面试",
+              "准备就绪"
+            ]
+          ]
+        }
+      ],
+      "backward_table": {
+        "headers": [
+          "周次",
+          "日期范围",
+          "重点",
+          "每日任务量",
+          "检查标准"
+        ],
+        "rows": [
+          [
+            "------",
+            "---------",
+            "------",
+            "-----------",
+            "---------"
+          ],
+          [
+            "W1",
+            "4/25~5/1",
+            "梳理知识点",
+            "梳理完整清单+学习2个知识点",
+            "知识点清单完成"
+          ],
+          [
+            "W2",
+            "5/2~5/8",
+            "核心知识（上）",
+            "学习3个知识点+1个小练习",
+            "掌握5个知识点"
+          ],
+          [
+            "W3",
+            "5/9~5/15",
+            "核心知识（下）",
+            "学习3个知识点+1个小练习",
+            "掌握8个知识点"
+          ],
+          [
+            "W4",
+            "5/16~5/22",
+            "项目实战1",
+            "完成第1个实战项目",
+            "项目1完成可演示"
+          ],
+          [
+            "W5",
+            "5/23~5/29",
+            "项目实战2",
+            "完成第2个实战项目",
+            "项目2完成可演示"
+          ],
+          [
+            "W6",
+            "5/30~6/5",
+            "项目实战3+算法",
+            "完成第3个项目+刷15题",
+            "项目3完成+15题"
+          ],
+          [
+            "W7",
+            "6/6~6/12",
+            "算法+模拟面试",
+            "刷20题+2次模拟面试",
+            "模拟面试通过"
+          ],
+          [
+            "W8",
+            "6/13~6/19",
+            "查漏补缺",
+            "补弱项+刷15题+2次模拟",
+            "弱项补齐"
+          ],
+          [
+            "W9",
+            "6/20~6/30",
+            "冲刺",
+            "复习+最终模拟面试",
+            "准备就绪"
+          ]
+        ]
+      },
+      "metrics": {
+        "倒推": "| 周次 | 日期范围 | 重点 | 每日任务量 | 检查标准 |\n|------|---------|------|-----------|---------|\n| W1 | 4/25~5/1 | 梳理知识点 | 梳理完整清单+学习2个知识点 | 知识点清单完成 |\n| W2 | 5/2~5/8 | 核心知识（上） | 学习3个知识点+1个小练习 | 掌握5个知识点 |\n| W3 | 5/9~5/15 | 核心知识（下） | 学习3个知识点+1个小练习 | 掌握8个知识点 |\n| W4 | 5/16~5/22 | 项目实战1 | 完成第1个实战项目 | 项目1完成可演示 |\n| W5 | 5"
+      }
+    },
+    {
+      "id": "goal-cet4",
+      "title": "四级英语考试",
+      "emoji": "🎯",
+      "status": "进行中",
+      "status_color": "#3b82f6",
+      "deadline": "2026-06-13（六级第二周周六，四级同天）",
+      "remaining": "49",
+      "progress": "未开始",
+      "milestones_done": 1,
+      "milestones_total": 11,
+      "milestone_pct": 9,
+      "file": "goal-cet4.md",
+      "tags": [
+        "英语",
+        "考试",
+        "学习"
+      ],
+      "tasks": [
+        {
+          "done": true,
+          "text": "CET-4 成绩 ≥ 425分"
+        },
+        {
+          "done": false,
+          "text": "词汇量恢复到3500+（从当前约2000-2500）"
+        },
+        {
+          "done": false,
+          "text": "完成至少5套真题模拟（平均分 ≥ 430）"
+        },
+        {
+          "done": false,
+          "text": "听力正确率 ≥ 60%"
+        },
+        {
+          "done": false,
+          "text": "阅读正确率 ≥ 65%"
+        },
+        {
+          "done": false,
+          "text": "完成第1套真题摸底（W1结束，目标≥380分）"
+        },
+        {
+          "done": false,
+          "text": "词汇量恢复到3000（W2结束）"
+        },
+        {
+          "done": false,
+          "text": "听力正确率≥50%（W3结束）"
+        },
+        {
+          "done": false,
+          "text": "真题平均分≥400（W5结束）"
+        },
+        {
+          "done": false,
+          "text": "真题平均分≥425（W6结束）"
+        },
+        {
+          "done": false,
+          "text": "通过四级考试 ≥425分（6月13日）"
+        }
+      ],
+      "tables": [
+        {
+          "headers": [
+            "周次",
+            "日期范围",
+            "重点",
+            "每日任务量",
+            "检查标准"
+          ],
+          "rows": [
+            [
+              "------",
+              "---------",
+              "------",
+              "-----------",
+              "---------"
+            ],
+            [
+              "W1",
+              "4/25~5/1",
+              "恢复语感",
+              "背30词+1篇阅读+1篇听力",
+              "能读懂简单文章"
+            ],
+            [
+              "W2",
+              "5/2~5/8",
+              "词汇加速",
+              "背50词+1阅读+1听力+1写作",
+              "词汇量恢复到3000"
+            ],
+            [
+              "W3",
+              "5/9~5/15",
+              "听力突破",
+              "背50词+2听力+1阅读",
+              "听力正确率≥50%"
+            ],
+            [
+              "W4",
+              "5/16~5/22",
+              "阅读突破",
+              "背50词+2阅读+1听力",
+              "阅读正确率≥60%"
+            ],
+            [
+              "W5",
+              "5/23~5/29",
+              "写作翻译",
+              "背30词+1写作+1翻译+1真题",
+              "真题分数≥400"
+            ],
+            [
+              "W6",
+              "5/30~6/5",
+              "真题冲刺",
+              "每天1套真题+错题分析",
+              "真题平均≥425"
+            ],
+            [
+              "W7",
+              "6/6~6/12",
+              "查漏补缺",
+              "错题回顾+弱项强化+模拟",
+              "模拟≥430"
+            ]
+          ]
+        }
+      ],
+      "backward_table": {
+        "headers": [
+          "周次",
+          "日期范围",
+          "重点",
+          "每日任务量",
+          "检查标准"
+        ],
+        "rows": [
+          [
+            "------",
+            "---------",
+            "------",
+            "-----------",
+            "---------"
+          ],
+          [
+            "W1",
+            "4/25~5/1",
+            "恢复语感",
+            "背30词+1篇阅读+1篇听力",
+            "能读懂简单文章"
+          ],
+          [
+            "W2",
+            "5/2~5/8",
+            "词汇加速",
+            "背50词+1阅读+1听力+1写作",
+            "词汇量恢复到3000"
+          ],
+          [
+            "W3",
+            "5/9~5/15",
+            "听力突破",
+            "背50词+2听力+1阅读",
+            "听力正确率≥50%"
+          ],
+          [
+            "W4",
+            "5/16~5/22",
+            "阅读突破",
+            "背50词+2阅读+1听力",
+            "阅读正确率≥60%"
+          ],
+          [
+            "W5",
+            "5/23~5/29",
+            "写作翻译",
+            "背30词+1写作+1翻译+1真题",
+            "真题分数≥400"
+          ],
+          [
+            "W6",
+            "5/30~6/5",
+            "真题冲刺",
+            "每天1套真题+错题分析",
+            "真题平均≥425"
+          ],
+          [
+            "W7",
+            "6/6~6/12",
+            "查漏补缺",
+            "错题回顾+弱项强化+模拟",
+            "模拟≥430"
+          ]
+        ]
+      },
+      "metrics": {
+        "倒推": "| 周次 | 日期范围 | 重点 | 每日任务量 | 检查标准 |\n|------|---------|------|-----------|---------|\n| W1 | 4/25~5/1 | 恢复语感 | 背30词+1篇阅读+1篇听力 | 能读懂简单文章 |\n| W2 | 5/2~5/8 | 词汇加速 | 背50词+1阅读+1听力+1写作 | 词汇量恢复到3000 |\n| W3 | 5/9~5/15 | 听力突破 | 背50词+2听力+1阅读 | 听力正确率≥50% |\n| W4 | 5/16~5/22 | 阅读突破 | 背50词+2阅读+1听力 | 阅读正确率≥60% |\n| W5 "
+      }
+    },
+    {
+      "id": "goal-fitness",
+      "title": "减脂到140斤",
+      "emoji": "🎯",
+      "status": "进行中",
+      "status_color": "#3b82f6",
+      "deadline": "2026-05-31",
+      "remaining": "36",
+      "progress": "0%",
+      "milestones_done": 0,
+      "milestones_total": 9,
+      "milestone_pct": 0,
+      "file": "goal-fitness.md",
+      "tags": [
+        "健康",
+        "减脂",
+        "健身"
+      ],
+      "tasks": [
+        {
+          "done": false,
+          "text": "体重 ≤ 140斤（允许 ±1斤浮动，即139-141斤）"
+        },
+        {
+          "done": false,
+          "text": "每周减重 ≥ 1斤（最低标准，低于此需调整方案）"
+        },
+        {
+          "done": false,
+          "text": "每周运动 ≥ 4次"
+        },
+        {
+          "done": false,
+          "text": "每日记录饮食 ≥ 5天/周"
+        },
+        {
+          "done": false,
+          "text": "完成减脂知识学习（W1）"
+        },
+        {
+          "done": false,
+          "text": "连续运动7天（W2）"
+        },
+        {
+          "done": false,
+          "text": "体重降至145斤（W1结束）"
+        },
+        {
+          "done": false,
+          "text": "体重降至143斤（W3结束）"
+        },
+        {
+          "done": false,
+          "text": "体重降至140斤（W5结束）"
+        }
+      ],
+      "tables": [
+        {
+          "headers": [
+            "周次",
+            "日期范围",
+            "目标体重",
+            "需减",
+            "重点任务"
+          ],
+          "rows": [
+            [
+              "------",
+              "---------",
+              "---------",
+              "------",
+              "---------"
+            ],
+            [
+              "W1",
+              "4/25~5/1",
+              "145.5斤",
+              "1斤",
+              "学减脂知识 + 建立饮食记录 + 开始运动"
+            ],
+            [
+              "W2",
+              "5/2~5/8",
+              "144.5斤",
+              "1斤",
+              "执行饮食方案 + 运动加量"
+            ],
+            [
+              "W3",
+              "5/9~5/15",
+              "143斤",
+              "1.5斤",
+              "严格饮食 + 有氧+力量"
+            ],
+            [
+              "W4",
+              "5/16~5/22",
+              "141.5斤",
+              "1.5斤",
+              "保持强度 + 调整方案"
+            ],
+            [
+              "W5",
+              "5/23~5/31",
+              "140斤",
+              "1.5斤",
+              "冲刺 + 稳定"
+            ]
+          ]
+        }
+      ],
+      "backward_table": {
+        "headers": [
+          "周次",
+          "日期范围",
+          "目标体重",
+          "需减",
+          "重点任务"
+        ],
+        "rows": [
+          [
+            "------",
+            "---------",
+            "---------",
+            "------",
+            "---------"
+          ],
+          [
+            "W1",
+            "4/25~5/1",
+            "145.5斤",
+            "1斤",
+            "学减脂知识 + 建立饮食记录 + 开始运动"
+          ],
+          [
+            "W2",
+            "5/2~5/8",
+            "144.5斤",
+            "1斤",
+            "执行饮食方案 + 运动加量"
+          ],
+          [
+            "W3",
+            "5/9~5/15",
+            "143斤",
+            "1.5斤",
+            "严格饮食 + 有氧+力量"
+          ],
+          [
+            "W4",
+            "5/16~5/22",
+            "141.5斤",
+            "1.5斤",
+            "保持强度 + 调整方案"
+          ],
+          [
+            "W5",
+            "5/23~5/31",
+            "140斤",
+            "1.5斤",
+            "冲刺 + 稳定"
+          ]
+        ]
+      },
+      "metrics": {
+        "倒推": "| 周次 | 日期范围 | 目标体重 | 需减 | 重点任务 |\n|------|---------|---------|------|---------|\n| W1 | 4/25~5/1 | 145.5斤 | 1斤 | 学减脂知识 + 建立饮食记录 + 开始运动 |\n| W2 | 5/2~5/8 | 144.5斤 | 1斤 | 执行饮食方案 + 运动加量 |\n| W3 | 5/9~5/15 | 143斤 | 1.5斤 | 严格饮食 + 有氧+力量 |\n| W4 | 5/16~5/22 | 141.5斤 | 1.5斤 | 保持强度 + 调整方案 |\n| W5 | 5/23~5/31 | 140"
+      }
+    }
+  ],
+  "today": {
+    "date": "2026-04-25",
+    "energy": "中",
+    "sleep_time": "02:00",
+    "wake_time": "10:40",
+    "sleep_hours": "8.5",
+    "tasks": [
+      {
+        "done": true,
+        "text": "🥗 记录早餐（食物+估算热量，目标≤500大卡）"
+      },
+      {
+        "done": true,
+        "text": "📖 背30个英语单词（用APP或单词本）"
+      },
+      {
+        "done": true,
+        "text": "📚 阅读健身参考资料，了解热量计算方法"
+      },
+      {
+        "done": true,
+        "text": "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）"
+      },
+      {
+        "done": true,
+        "text": "✍️ 做1篇四级阅读理解（找回手感）"
+      },
+      {
+        "done": true,
+        "text": "🥗 记录晚餐（食物+估算热量，目标≤500大卡）"
+      }
+    ],
+    "done": 6,
+    "total": 6,
+    "pct": 100,
+    "time_table": {
+      "headers": [
+        "时间窗口",
+        "任务",
+        "状态",
+        "XP",
+        "目标"
+      ],
+      "rows": [
+        [
+          "---------",
+          "------",
+          "------",
+          "-----",
+          "------"
+        ],
+        [
+          "起床后",
+          "🥗 记录早餐（食物+估算热量，目标≤500大卡）",
+          "✅",
+          "10",
+          "🎯 减脂"
+        ],
+        [
+          "上午",
+          "📖 背30个英语单词（用APP或单词本）",
+          "✅",
+          "15",
+          "🎯 四级"
+        ],
+        [
+          "下午",
+          "📚 阅读健身参考资料，了解热量计算方法",
+          "✅",
+          "25",
+          "🎯 减脂"
+        ],
+        [
+          "下午",
+          "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）",
+          "✅",
+          "40",
+          "🎯 AI面试"
+        ],
+        [
+          "晚上",
+          "✍️ 做1篇四级阅读理解（找回手感）",
+          "✅",
+          "20",
+          "🎯 四级"
+        ],
+        [
+          "睡前",
+          "🥗 记录晚餐（食物+估算热量，目标≤500大卡）",
+          "✅",
+          "10",
+          "🎯 减脂"
+        ]
+      ]
+    }
+  },
+  "quicklog": [
+    {
+      "id": "",
+      "date": "",
+      "time": "",
+      "type": "",
+      "record": "- [13:18] ❌ 任务失败：📚 阅读健身参考资料，了解热量计算方法 | 原因：test"
+    },
+    {
+      "id": "",
+      "date": "",
+      "time": "",
+      "type": "",
+      "record": ""
+    }
+  ],
+  "health": {
+    "weight": [
+      {
+        "headers": [
+          "日期",
+          "体重(斤)",
+          "变化",
+          "备注"
+        ],
+        "rows": [
+          [
+            "------",
+            "---------",
+            "------",
+            "------"
+          ],
+          [
+            "2026-04-25",
+            "146.5",
+            "起点",
+            "73.25公斤，空腹"
+          ]
+        ]
+      }
+    ],
+    "exercise": [
+      {
+        "headers": [
+          "日期",
+          "类型",
+          "时长",
+          "备注"
+        ],
+        "rows": [
+          [
+            "------",
+            "------",
+            "------",
+            "------"
+          ]
+        ]
+      }
+    ],
+    "sleep": [
+      {
+        "headers": [
+          "日期",
+          "时长(小时)",
+          "质量",
+          "备注"
+        ],
+        "rows": [
+          [
+            "------",
+            "-----------",
+            "------",
+            "------"
+          ]
+        ]
+      }
+    ],
+    "diet": [
+      {
+        "headers": [
+          "餐次",
+          "休息日热量",
+          "力训日热量",
+          "蛋白质建议",
+          "备注"
+        ],
+        "rows": [
+          [
+            "------",
+            "-----------",
+            "-----------",
+            "-----------",
+            "------"
+          ],
+          [
+            "①早饭(练前餐)",
+            "0碳水+0蛋白",
+            "0碳水+0蛋白",
+            "0g",
+            "练前不吃碳蛋，只吃鸡蛋+牛奶提供脂肪"
+          ],
+          [
+            "②练后餐",
+            "—",
+            "碳水+蛋白质",
+            "力训日主餐",
+            "练后30分钟内"
+          ],
+          [
+            "③午饭",
+            "碳水+蛋白质",
+            "碳水+蛋白质",
+            "40-50g",
+            "主餐"
+          ],
+          [
+            "④晚饭",
+            "碳水+蛋白质",
+            "碳水+蛋白质",
+            "30-40g",
+            "睡前3小时"
+          ],
+          [
+            "零食/夜宵",
+            "少量",
+            "少量",
+            "0g",
+            "不吃就不在其他餐多吃"
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "日期",
+          "餐次",
+          "内容",
+          "估算热量",
+          "蛋白质",
+          "碳水"
+        ],
+        "rows": [
+          [
+            "------",
+            "------",
+            "------",
+            "---------",
+            "--------",
+            "------"
+          ],
+          [
+            "2026-04-25",
+            "午饭",
+            "米饭~220g + 包菜~180g + 鸡肉小块~70g + 酱汁油~15g（盖饭）",
+            "~600大卡",
+            "~20g",
+            "~75g"
+          ],
+          [
+            "2026-04-25",
+            "早餐",
+            "_未吃_",
+            "0",
+            "0",
+            "0"
+          ],
+          [
+            "2026-04-25",
+            "晚餐",
+            "_待记录_",
+            "-",
+            "-",
+            "-"
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "食物",
+          "热量",
+          "蛋白质"
+        ],
+        "rows": [
+          [
+            "------",
+            "------",
+            "--------"
+          ],
+          [
+            "鸡胸肉",
+            "165大卡",
+            "31g"
+          ],
+          [
+            "鸡蛋",
+            "155大卡",
+            "13g"
+          ],
+          [
+            "糙米(熟)",
+            "123大卡",
+            "2.7g"
+          ],
+          [
+            "西兰花",
+            "34大卡",
+            "2.8g"
+          ],
+          [
+            "红薯",
+            "86大卡",
+            "1.6g"
+          ],
+          [
+            "牛肉(瘦)",
+            "250大卡",
+            "26g"
+          ],
+          [
+            "豆腐",
+            "76大卡",
+            "8g"
+          ],
+          [
+            "牛奶",
+            "42大卡",
+            "3.4g"
+          ],
+          [
+            "香蕉",
+            "89大卡",
+            "1.1g"
+          ],
+          [
+            "燕麦(干)",
+            "389大卡",
+            "17g"
+          ]
+        ]
+      }
+    ]
+  },
+  "finance": {
+    "expense": [
+      {
+        "headers": [
+          "日期",
+          "金额(¥)",
+          "类别",
+          "备注"
+        ],
+        "rows": [
+          [
+            "------",
+            "---------",
+            "------",
+            "------"
+          ]
+        ]
+      }
+    ],
+    "budget": [
+      {
+        "headers": [
+          "类别",
+          "预算(¥)",
+          "已用(¥)",
+          "剩余(¥)",
+          "状态"
+        ],
+        "rows": [
+          [
+            "------",
+            "---------",
+            "---------",
+            "---------",
+            "------"
+          ],
+          [
+            "餐饮",
+            "0",
+            "0",
+            "0",
+            "-"
+          ],
+          [
+            "交通",
+            "0",
+            "0",
+            "0",
+            "-"
+          ],
+          [
+            "学习",
+            "0",
+            "0",
+            "0",
+            "-"
+          ],
+          [
+            "娱乐",
+            "0",
+            "0",
+            "0",
+            "-"
+          ],
+          [
+            "其他",
+            "0",
+            "0",
+            "0",
+            "-"
+          ],
+          [
+            "**合计**",
+            "**0**",
+            "**0**",
+            "**0**",
+            "-"
+          ]
+        ]
+      }
+    ],
+    "income": [
+      {
+        "headers": [
+          "日期",
+          "金额(¥)",
+          "来源",
+          "备注"
+        ],
+        "rows": [
+          [
+            "------",
+            "---------",
+            "------",
+            "------"
+          ]
+        ]
+      }
+    ]
+  },
+  "weekly_plan": {
+    "id": "plan-weekly-2026-04-25",
+    "period": "2026-04-25 ~ 2026-05-01",
+    "file": "plan-weekly-2026-04-25.md",
+    "tables": [
+      {
+        "headers": [
+          "时间窗口",
+          "任务",
+          "XP",
+          "目标",
+          "倒推关联"
+        ],
+        "rows": [
+          [
+            "---------",
+            "------",
+            "-----",
+            "------",
+            "---------"
+          ],
+          [
+            "起床后",
+            "🥗 记录早餐（食物+估算热量，目标≤500大卡）",
+            "10",
+            "🎯 减脂",
+            "每日饮食记录"
+          ],
+          [
+            "上午",
+            "📖 背30个英语单词（用APP或单词本）",
+            "15",
+            "🎯 四级",
+            "W1词汇恢复"
+          ],
+          [
+            "下午",
+            "📚 阅读健身参考资料，了解热量计算方法",
+            "25",
+            "🎯 减脂",
+            "里程碑：完成知识学习"
+          ],
+          [
+            "下午",
+            "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）",
+            "40",
+            "🎯 AI面试",
+            "里程碑：清单完成"
+          ],
+          [
+            "晚上",
+            "✍️ 做1篇四级阅读理解（找回手感）",
+            "20",
+            "🎯 四级",
+            "W1恢复语感"
+          ],
+          [
+            "睡前",
+            "🥗 记录晚餐（食物+估算热量，目标≤500大卡）",
+            "10",
+            "🎯 减脂",
+            "每日饮食记录"
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "时间窗口",
+          "任务",
+          "XP",
+          "目标",
+          "倒推关联"
+        ],
+        "rows": [
+          [
+            "---------",
+            "------",
+            "-----",
+            "------",
+            "---------"
+          ],
+          [
+            "起床后",
+            "🥗 记录早餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ],
+          [
+            "上午",
+            "📖 背30个英语单词",
+            "15",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "下午",
+            "🏋️ **居家训练Day1：背+肩后束+肱二头**（40-60min）",
+            "30",
+            "🎯 减脂",
+            "每周运动≥4次"
+          ],
+          [
+            "",
+            "具体动作：引体/弹力带划船(6-8组) + 哑铃飞鸟(6-8组) + 哑铃弯举(6-8组)",
+            "",
+            "",
+            ""
+          ],
+          [
+            "下午",
+            "🤖 学习AI面试知识点1：LLM基础原理",
+            "35",
+            "🎯 AI面试",
+            "W1学习2个知识点"
+          ],
+          [
+            "晚上",
+            "🎧 做1篇四级听力练习",
+            "20",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "睡前",
+            "🥗 记录晚餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "时间窗口",
+          "任务",
+          "XP",
+          "目标",
+          "倒推关联"
+        ],
+        "rows": [
+          [
+            "---------",
+            "------",
+            "-----",
+            "------",
+            "---------"
+          ],
+          [
+            "起床后",
+            "🥗 记录早餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ],
+          [
+            "上午",
+            "📖 背30个英语单词",
+            "15",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "下午",
+            "🏋️ **居家训练Day2：胸+肩前中束+肱三头**（40-60min）",
+            "30",
+            "🎯 减脂",
+            ""
+          ],
+          [
+            "",
+            "具体动作：俯卧撑(6-8组) + 哑铃侧平举(6-8组) + 颈后臂屈伸(6-8组)",
+            "",
+            "",
+            ""
+          ],
+          [
+            "下午",
+            "🤖 学习AI面试知识点2：Prompt Engineering",
+            "35",
+            "🎯 AI面试",
+            "W1学习2个知识点"
+          ],
+          [
+            "晚上",
+            "✍️ 做1篇四级阅读理解",
+            "20",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "睡前",
+            "🥗 记录晚餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "时间窗口",
+          "任务",
+          "XP",
+          "目标",
+          "倒推关联"
+        ],
+        "rows": [
+          [
+            "---------",
+            "------",
+            "-----",
+            "------",
+            "---------"
+          ],
+          [
+            "起床后",
+            "🥗 记录早餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ],
+          [
+            "上午",
+            "📖 背30个英语单词",
+            "15",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "下午",
+            "🏋️ **居家训练Day3：腿臀+腹**（40-60min）",
+            "30",
+            "🎯 减脂",
+            ""
+          ],
+          [
+            "",
+            "具体动作：哑铃深蹲(6-8组) + 哑铃硬拉(6-8组) + 弹力带臀桥(6-8组) + 卷腹(6-8组)",
+            "",
+            "",
+            ""
+          ],
+          [
+            "下午",
+            "📋 制定个人饮食方案（基于热量预算：1900大卡/天）",
+            "30",
+            "🎯 减脂",
+            "里程碑：饮食方案"
+          ],
+          [
+            "晚上",
+            "🎧 做1篇四级听力练习",
+            "20",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "睡前",
+            "🥗 记录晚餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "时间窗口",
+          "任务",
+          "XP",
+          "目标",
+          "倒推关联"
+        ],
+        "rows": [
+          [
+            "---------",
+            "------",
+            "-----",
+            "------",
+            "---------"
+          ],
+          [
+            "起床后",
+            "🥗 记录早餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ],
+          [
+            "上午",
+            "📖 背30个英语单词",
+            "15",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "下午",
+            "🚶 轻有氧：快走20分钟（消耗约130大卡）",
+            "20",
+            "🎯 减脂",
+            "有氧恢复日"
+          ],
+          [
+            "下午",
+            "🤖 AI知识点小练习/实践（用学过的LLM/Prompt知识写个小demo）",
+            "35",
+            "🎯 AI面试",
+            ""
+          ],
+          [
+            "晚上",
+            "✍️ 做1篇四级阅读理解",
+            "20",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "睡前",
+            "🥗 记录晚餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "时间窗口",
+          "任务",
+          "XP",
+          "目标",
+          "倒推关联"
+        ],
+        "rows": [
+          [
+            "---------",
+            "------",
+            "-----",
+            "------",
+            "---------"
+          ],
+          [
+            "起床后",
+            "🥗 记录早餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ],
+          [
+            "上午",
+            "📖 背30个英语单词",
+            "15",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "下午",
+            "🏋️ **居家训练Day4：背+肩后束+肱二头**（40-60min）",
+            "30",
+            "🎯 减脂",
+            ""
+          ],
+          [
+            "下午",
+            "📖 复习本周AI知识点（LLM基础+Prompt Engineering）",
+            "25",
+            "🎯 AI面试",
+            ""
+          ],
+          [
+            "晚上",
+            "🎧 做1篇四级听力练习",
+            "20",
+            "🎯 四级",
+            ""
+          ],
+          [
+            "睡前",
+            "🥗 记录晚餐（≤500大卡）",
+            "10",
+            "🎯 减脂",
+            ""
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "时间窗口",
+          "任务",
+          "XP",
+          "目标",
+          "倒推关联"
+        ],
+        "rows": [
+          [
+            "---------",
+            "------",
+            "-----",
+            "------",
+            "---------"
+          ],
+          [
+            "早晨",
+            "⚖️ 空腹称重记录",
+            "5",
+            "🎯 减脂",
+            "检查点：目标145.5斤"
+          ],
+          [
+            "上午",
+            "📝 完成第1套四级真题摸底",
+            "50",
+            "🎯 四级",
+            "检查点：目标≥380分"
+          ],
+          [
+            "下午",
+            "📊 执行周复盘（对比W1检查点）",
+            "30",
+            "🎯 系统",
+            ""
+          ],
+          [
+            "下午",
+            "📋 根据复盘结果调整W2计划",
+            "20",
+            "🎯 系统",
+            ""
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "目标",
+          "W1检查标准",
+          "检查方式"
+        ],
+        "rows": [
+          [
+            "------",
+            "-----------",
+            "---------"
+          ],
+          [
+            "🏃 减脂",
+            "体重 ≤ 145.5斤（减≥1斤）",
+            "周四空腹称重"
+          ],
+          [
+            "📖 四级",
+            "真题摸底 ≥ 380分",
+            "完成第1套真题"
+          ],
+          [
+            "🤖 AI面试",
+            "知识点清单完成 + 掌握2个知识点",
+            "清单文件 + 练习产出"
+          ]
+        ]
+      },
+      {
+        "headers": [
+          "日期",
+          "训练类型",
+          "具体内容"
+        ],
+        "rows": [
+          [
+            "------",
+            "---------",
+            "---------"
+          ],
+          [
+            "Day2 周六",
+            "力训 Day1",
+            "背+肩后束+肱二头"
+          ],
+          [
+            "Day3 周日",
+            "力训 Day2",
+            "胸+肩前中束+肱三头"
+          ],
+          [
+            "Day4 周一",
+            "力训 Day3",
+            "腿臀+腹"
+          ],
+          [
+            "Day5 周二",
+            "轻有氧",
+            "快走20min（恢复日）"
+          ],
+          [
+            "Day6 周三",
+            "力训 Day4",
+            "背+肩后束+肱二头（循环）"
+          ]
+        ]
+      }
+    ]
+  },
+  "memory": []
+};
+
+// ─── 渲染函数 ──────────────────────────────────────
+function render(data) {
+  document.getElementById('updateTime').textContent = '最后更新: ' + data.generated_at;
+  renderStats(data);
+  renderTimeline(data);
+  renderGoals(data.goals);
+  renderToday(data.today);
+  renderQuicklog(data.quicklog);
+  renderWeekly(data.weekly_plan);
+  renderHealth(data.health);
+  renderFinance(data.finance);
+}
+
+function renderStats(data) {
+  const goals = data.goals || [];
+  const today = data.today;
+  const activeGoals = goals.filter(g => g.status === '进行中').length;
+  const totalTasks = today ? today.total : 0;
+  const doneTasks = today ? today.done : 0;
+  const logs = (data.quicklog || []).length;
+  const pct = totalTasks > 0 ? Math.round(doneTasks / totalTasks * 100) : 0;
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-item">
+      <div class="stat-value">${activeGoals}</div>
+      <div class="stat-label">🎯 进行中目标</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">${doneTasks}/${totalTasks}</div>
+      <div class="stat-label">📋 今日任务</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">${pct}%</div>
+      <div class="stat-label">📊 今日完成率</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">${logs}</div>
+      <div class="stat-label">📝 QuickLog记录</div>
+    </div>
+  `;
+}
+
+function renderTimeline(data) {
+  const goals = (data.goals || []).filter(g => g.deadline && g.deadline !== '未设定');
+  // Sort by remaining days (nearest deadline first)
+  goals.sort((a, b) => (a.remaining || 999) - (b.remaining || 999));
+  let items = '<div class="tl-item"><div class="tl-dot now"></div><div class="tl-label">今天<br><small>' +
+    new Date().toLocaleDateString('zh-CN') + '</small></div></div>';
+  for (const g of goals) {
+    items += `<div class="tl-item"><div class="tl-dot deadline"></div><div class="tl-label">${g.emoji} ${g.title}<br><small>${g.deadline} (${g.remaining}天)</small></div></div>`;
+  }
+  document.getElementById('timeline').innerHTML = '<div class="timeline">' + items + '</div>';
+}
+
+function renderGoals(goals) {
+  if (!goals || goals.length === 0) {
+    document.getElementById('goalsGrid').innerHTML = '<p class="empty">暂无目标</p>';
+    return;
+  }
+  let html = '';
+  for (const g of goals) {
+    const pct = g.milestone_pct || 0;
+    const fillClass = pct >= 80 ? 'green' : pct >= 40 ? '' : 'red';
+
+    let msHtml = '';
+    for (let ti = 0; ti < (g.tasks || []).slice(0, 10).length; ti++) {
+      const t = (g.tasks || [])[ti];
+      const icon = t.done ? '✅' : '⬜';
+      msHtml += `<div class="ms-item ${t.done ? 'done' : ''}" onclick="toggleMilestone('${g.file}', ${ti}, this)" title="点击切换状态">${icon} ${t.text}</div>`;
+    }
+    if ((g.tasks || []).length > 10) {
+      msHtml += `<div class="ms-item" style="color:#475569;cursor:default">...还有 ${g.tasks.length - 10} 项</div>`;
+    }
+
+    // Backward plan table
+    let bpHtml = '';
+    if (g.backward_table) {
+      bpHtml = '<div class="backward-plan"><table><thead><tr>';
+      for (const h of g.backward_table.headers) bpHtml += `<th>${h}</th>`;
+      bpHtml += '</tr></thead><tbody>';
+      for (const row of g.backward_table.rows) {
+        bpHtml += '<tr>';
+        for (const cell of row) bpHtml += `<td>${cell}</td>`;
+        bpHtml += '</tr>';
+      }
+      bpHtml += '</tbody></table></div>';
+    }
+
+    // Deadline display
+    const tagsHtml = (g.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+
+    html += `
+    <div class="goal-card fade-in" style="border-left-color:${g.status_color}">
+      <div class="goal-header">
+        <span class="goal-emoji">${g.emoji}</span>
+        <span class="goal-title">${g.title}</span>
+        <span class="goal-status" style="background:${g.status_color}">${g.status}</span>
+      </div>
+      <div class="goal-meta">
+        <span>📅 ${g.deadline}</span>
+        <span>⏰ 剩余: ${g.remaining}天</span>
+        <span>📊 ${g.progress}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill ${fillClass}" style="width:${pct}%"></div>
+      </div>
+      <div class="milestones">${msHtml}</div>
+      ${bpHtml}
+      <div class="goal-tags">${tagsHtml}</div>
+    </div>`;
+  }
+  document.getElementById('goalsGrid').innerHTML = html;
+}
+
+function renderToday(today) {
+  const el = document.getElementById('todaySection');
+  if (!today) {
+    el.innerHTML = '<p class="empty">暂无今日任务</p>';
+    return;
+  }
+
+  let html = '';
+
+  // Set date in title
+  const dateEl = document.getElementById('todayDate');
+  if (dateEl) dateEl.textContent = today.date;
+
+  // Time table
+  if (today.time_table) {
+    html += '<div class="time-table"><table><thead><tr>';
+    for (const h of today.time_table.headers) html += `<th>${h}</th>`;
+    html += '</tr></thead><tbody>';
+    for (const row of today.time_table.rows) {
+      html += '<tr>';
+      for (const cell of row) {
+        const cls = cell.includes('✅') ? ' class="task-done"' : '';
+        html += `<td${cls}>${cell}</td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+
+  // Info bar
+  html += `<div class="today-info">
+    <span>🔋 ${today.energy}</span>
+    <span>😴 ${today.sleep_time} ~ ${today.wake_time} (${today.sleep_hours}h)</span>
+  </div>`;
+
+  // Progress
+  html += `<div class="progress-section">
+    <div class="progress-label">今日进度: ${today.done}/${today.total} (${today.pct}%)</div>
+    <div class="progress-bar large">
+      <div class="progress-fill ${today.pct >= 80 ? 'green' : today.pct >= 40 ? '' : 'red'}" style="width:${today.pct}%"></div>
+    </div>
+  </div>`;
+
+  // Task list
+  html += '<div class="task-list">';
+  for (let ti = 0; ti < today.tasks.length; ti++) {
+    const t = today.tasks[ti];
+    const icon = t.done ? '✅' : '⬜';
+    html += `<div class="task-item ${t.done ? 'done' : ''}" onclick="toggleTask(${ti}, this)" title="点击切换完成状态"><span class="check-icon">${icon}</span> ${t.text}</div>`;
+  }
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
+function renderQuicklog(logs) {
+  const el = document.getElementById('quicklogSection');
+  if (!logs || logs.length === 0) {
+    el.innerHTML = '<p class="empty">暂无记录</p>';
+    return;
+  }
+  const emojiMap = {
+    exercise: '🏃', expense: '💰', mood: '😊', task: '✅',
+    note: '📝', weight: '⚖️', sleep: '😴', study: '📖'
+  };
+  let html = '';
+  for (const log of logs) {
+    const e = emojiMap[log.type] || '📌';
+    html += `<div class="ql-item">
+      <span class="ql-emoji">${e}</span>
+      <span class="ql-text">${log.record || log.type}</span>
+      <span class="ql-meta">${log.date} ${log.time}</span>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderWeekly(plan) {
+  const el = document.getElementById('weeklySection');
+  if (!plan) {
+    el.innerHTML = '<p class="empty">暂无周计划</p>';
+    return;
+  }
+  let html = `<div class="plan-header">📋 ${plan.period}</div>`;
+  for (const t of plan.tables) {
+    html += '<table class="data-table plan-table"><thead><tr>';
+    for (const h of t.headers) html += `<th>${h}</th>`;
+    html += '</tr></thead><tbody>';
+    for (const row of t.rows) {
+      html += '<tr>';
+      for (const cell of row) html += `<td>${cell}</td>`;
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+  }
+  el.innerHTML = html;
+}
+
+function renderTableHtml(tables) {
+  let html = '';
+  for (const t of tables) {
+    html += '<table class="data-table"><thead><tr>';
+    for (const h of t.headers) html += `<th>${h}</th>`;
+    html += '</tr></thead><tbody>';
+    for (const row of t.rows) {
+      html += '<tr>';
+      for (const cell of row) html += `<td>${cell}</td>`;
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+  }
+  return html;
+}
+
+function renderHealth(health) {
+  const el = document.getElementById('healthSection');
+  if (!health || Object.keys(health).length === 0) {
+    el.innerHTML = '<p class="empty">暂无数据</p>';
+    return;
+  }
+  let html = '';
+  for (const [name, tables] of Object.entries(health)) {
+    if (tables && tables.length > 0) {
+      const labels = { weight: '⚖️ 体重', exercise: '🏃 运动', sleep: '😴 睡眠', diet: '🥗 饮食' };
+      html += `<div style="margin-bottom:12px"><strong style="color:#94a3b8;font-size:12px">${labels[name] || name}</strong></div>`;
+      html += renderTableHtml(tables);
+    }
+  }
+  el.innerHTML = html || '<p class="empty">暂无数据</p>';
+}
+
+function renderFinance(finance) {
+  const el = document.getElementById('financeSection');
+  if (!finance || Object.keys(finance).length === 0) {
+    el.innerHTML = '<p class="empty">暂无数据</p>';
+    return;
+  }
+  let html = '';
+  for (const [name, tables] of Object.entries(finance)) {
+    if (tables && tables.length > 0) {
+      const labels = { expense: '💸 支出', budget: '📋 预算', income: '💰 收入' };
+      html += `<div style="margin-bottom:12px"><strong style="color:#94a3b8;font-size:12px">${labels[name] || name}</strong></div>`;
+      html += renderTableHtml(tables);
+    }
+  }
+  el.innerHTML = html || '<p class="empty">暂无数据</p>';
+}
+
+// ─── 交互：点击切换任务/里程碑状态 ──────────────────
+function toggleTask(index, el) {
+  if (el.classList.contains('syncing')) return;
+  el.classList.add('syncing');
+  // Optimistic UI update
+  const wasDone = el.classList.contains('done');
+  el.querySelector('.check-icon').textContent = wasDone ? '⬜' : '✅';
+  el.classList.toggle('done', !wasDone);
+
+  fetch('/api/toggle-task', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ index: index })
+  })
+  .then(r => r.json())
+  .then(result => {
+    el.classList.remove('syncing');
+    if (result.ok) {
+      setTimeout(fetchAndUpdate, 500);
+    } else {
+      // Revert on error
+      el.querySelector('.check-icon').textContent = wasDone ? '✅' : '⬜';
+      el.classList.toggle('done', wasDone);
+    }
+  })
+  .catch(err => {
+    el.classList.remove('syncing');
+    // Revert on error
+    el.querySelector('.check-icon').textContent = wasDone ? '✅' : '⬜';
+    el.classList.toggle('done', wasDone);
+  });
+}
+
+function toggleMilestone(goalFile, index, el) {
+  el.classList.add('syncing');
+  fetch('/api/toggle-milestone', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ goal_file: goalFile, index: index })
+  })
+  .then(r => r.json())
+  .then(result => {
+    if (result.ok) {
+      const icon = result.done ? '✅' : '⬜';
+      el.firstChild.textContent = icon + ' ';
+      el.classList.toggle('done', result.done);
+      setTimeout(fetchAndUpdate, 300);
+    } else {
+      el.classList.remove('syncing');
+    }
+  })
+  .catch(err => {
+    el.classList.remove('syncing');
+  });
+}
+
+// ─── 动态刷新 ──────────────────────────────────────
+function fetchAndUpdate() {
+  fetch('/api/data')
+    .then(r => r.json())
+    .then(data => {
+      dashboardData = data;
+      render(data);
+    })
+    .catch(err => {
+      console.log('Fetch failed, using embedded data:', err.message);
+    });
+}
+
+// Initial render
+render(dashboardData);
+
+// Auto-refresh every 10 seconds
+// Cache buster
+console.log('Stone Plan Dashboard v2.0.1 - ' + new Date().toISOString());
+
+setInterval(fetchAndUpdate, 10000);
+
+// Scroll spy for nav highlighting
+const sections = ['timeline','today','goals','quicklog','plan','health','finance'];
+const navPills = document.querySelectorAll('.nav-pill');
+
+function updateActiveNav() {
+  let current = '';
+  const scrolled = window.scrollY > 300;
+  document.getElementById('backToTop').style.display = scrolled ? '' : 'none';
+  for (const id of sections) {
+    const el = document.getElementById('section-' + id);
+    if (el && el.getBoundingClientRect().top <= 120) {
+      current = id;
+    }
+  }
+  navPills.forEach(pill => {
+    pill.classList.toggle('active', pill.getAttribute('href') === '#section-' + current);
+  });
+}
+window.addEventListener('scroll', updateActiveNav, { passive: true });
+
+// Smooth scroll for nav pills
+navPills.forEach(pill => {
+  pill.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(pill.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+</body>
+</html>
