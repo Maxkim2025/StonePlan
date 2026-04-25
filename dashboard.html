@@ -106,6 +106,16 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+  .stat-value.xp {
+    background: linear-gradient(135deg, #22d3ee, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat-value.streak {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   .stat-label {
     font-size: 12px;
     color: #64748b;
@@ -151,6 +161,36 @@
     flex-wrap: wrap;
   }
   .goal-tags { margin-top: 8px; }
+  .goal-forecast {
+    margin: 8px 0 2px 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 11px;
+  }
+  .goal-forecast .chip {
+    background: #273449;
+    color: #bfdbfe;
+    border-radius: 8px;
+    padding: 5px 8px;
+  }
+  .goal-forecast .chip.risk-high { background: rgba(239,68,68,0.2); color: #fca5a5; }
+  .goal-forecast .chip.risk-mid { background: rgba(245,158,11,0.2); color: #fcd34d; }
+  .goal-forecast .chip.risk-low { background: rgba(16,185,129,0.2); color: #86efac; }
+  .deadline-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .deadline-chip.red { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+  .deadline-chip.yellow { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+  .deadline-chip.blue { background: rgba(59, 130, 246, 0.18); color: #93c5fd; }
+  .deadline-chip.gray { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; }
+  .deadline-chip.overdue { background: rgba(220, 38, 38, 0.25); color: #fecaca; }
   .tag {
     display: inline-block;
     background: #334155;
@@ -185,6 +225,12 @@
     margin-bottom: 4px;
   }
   .progress-section { margin: 10px 0; }
+  .progress-fill.pulse { animation: pulseGrow 0.8s ease; }
+  @keyframes pulseGrow {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.4); }
+    100% { filter: brightness(1); }
+  }
 
   /* Milestones */
   .milestones { margin-top: 8px; }
@@ -212,6 +258,7 @@
   .task-item {
     font-size: 13px;
     padding: 6px 10px;
+    min-height: 44px;
     color: #cbd5e1;
     border-radius: 6px;
     margin-bottom: 4px;
@@ -221,6 +268,7 @@
     cursor: pointer;
     transition: background 0.2s;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
   .task-item:hover { background: #334155; }
   .task-item:active { transform: scale(0.98); }
@@ -228,6 +276,27 @@
   .task-item.syncing { opacity: 0.5; pointer-events: none; }
   .task-item .check-icon { transition: transform 0.2s; }
   .task-item:hover .check-icon { transform: scale(1.2); }
+  .task-main { flex: 1; }
+  .task-deadline {
+    font-size: 11px;
+    color: #93c5fd;
+    background: rgba(59,130,246,0.18);
+    border: 1px solid rgba(96,165,250,0.35);
+    border-radius: 8px;
+    padding: 2px 8px;
+    white-space: nowrap;
+  }
+  .fail-btn {
+    border: 0;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    color: #fecaca;
+    background: rgba(127,29,29,0.45);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .fail-btn:hover { background: rgba(153, 27, 27, 0.55); }
   .today-info {
     display: flex;
     gap: 20px;
@@ -240,6 +309,239 @@
     background: #334155;
     padding: 4px 12px;
     border-radius: 8px;
+  }
+  .now-action {
+    background: linear-gradient(135deg, rgba(59,130,246,0.18), rgba(16,185,129,0.18));
+    border: 1px solid rgba(96,165,250,0.35);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .now-action .title {
+    font-size: 13px;
+    color: #bfdbfe;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .now-action .desc {
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .start-btn {
+    margin-top: 10px;
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 12px;
+    background: linear-gradient(135deg, #2563eb, #14b8a6);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .focus-timer {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #bfdbfe;
+  }
+  .streak-alert {
+    margin-top: 8px;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    background: rgba(245, 158, 11, 0.18);
+    color: #fcd34d;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+  }
+  .celebration {
+    margin-top: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #86efac;
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(52, 211, 153, 0.4);
+    animation: popIn 0.5s ease;
+  }
+  @keyframes popIn {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .daily-summary {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: min(360px, calc(100vw - 24px));
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 12px 14px;
+    z-index: 9999;
+    box-shadow: 0 16px 38px rgba(0,0,0,0.35);
+  }
+  .daily-summary h4 { font-size: 14px; margin-bottom: 6px; color: #f8fafc; }
+  .daily-summary p { font-size: 12px; line-height: 1.6; color: #cbd5e1; }
+  .daily-summary button {
+    margin-top: 8px;
+    border: 0;
+    background: #3b82f6;
+    color: #fff;
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .guardian-risk {
+    margin-bottom: 18px;
+    border: 1px solid rgba(239, 68, 68, 0.45);
+    background: linear-gradient(135deg, rgba(127,29,29,0.35), rgba(30,41,59,0.85));
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .guardian-risk h3 {
+    font-size: 14px;
+    color: #fecaca;
+    margin-bottom: 8px;
+  }
+  .guardian-risk .risk-item {
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #f1f5f9;
+    line-height: 1.55;
+  }
+  .guardian-risk .risk-item:last-child { margin-bottom: 0; }
+  .guardian-risk .meta {
+    display: block;
+    margin-top: 2px;
+    color: #cbd5e1;
+  }
+  .guardian-ok {
+    margin-bottom: 18px;
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    background: linear-gradient(135deg, rgba(6,78,59,0.45), rgba(30,41,59,0.85));
+    border-radius: 12px;
+    padding: 10px 14px;
+    color: #86efac;
+    font-size: 13px;
+  }
+  .xp-next {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #93c5fd;
+  }
+  .focus-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(2, 6, 23, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .focus-overlay .panel {
+    width: min(620px, 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, #111827, #0f172a);
+    padding: 20px;
+  }
+  .focus-overlay h3 {
+    color: #f8fafc;
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  .focus-overlay p {
+    color: #cbd5e1;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .focus-overlay .clock {
+    margin: 14px 0;
+    color: #93c5fd;
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .focus-overlay .btns {
+    margin-top: 14px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .focus-overlay .btn {
+    border: 0;
+    border-radius: 10px;
+    padding: 9px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .focus-overlay .btn-primary {
+    background: linear-gradient(135deg, #2563eb, #14b8a6);
+    color: #fff;
+  }
+  .focus-overlay .btn-success {
+    background: linear-gradient(135deg, #16a34a, #10b981);
+    color: #fff;
+  }
+  .focus-overlay .btn-muted {
+    background: #334155;
+    color: #e2e8f0;
+  }
+  .focus-overlay .hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+  .failure-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(2, 6, 23, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+  }
+  .failure-modal .panel {
+    width: min(560px, 100%);
+    border-radius: 14px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    padding: 16px;
+  }
+  .failure-modal h4 {
+    color: #f8fafc;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  .failure-modal .task {
+    color: #cbd5e1;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  .failure-modal label {
+    display: block;
+    color: #93c5fd;
+    font-size: 12px;
+    margin: 8px 0 4px 0;
+  }
+  .failure-modal textarea {
+    width: 100%;
+    min-height: 90px;
+    resize: vertical;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    background: #111827;
+    color: #e2e8f0;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .failure-modal .btns {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
   }
 
   /* Time table */
@@ -538,6 +840,9 @@
   .nav-pill {
     flex-shrink: 0;
     padding: 6px 14px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 500;
@@ -547,6 +852,7 @@
     border: 1px solid transparent;
     transition: all 0.2s;
     scroll-margin-top: 60px;
+    -webkit-tap-highlight-color: transparent;
   }
   .nav-pill:hover {
     background: rgba(255,255,255,0.1);
@@ -556,6 +862,10 @@
     background: rgba(102, 126, 234, 0.15);
     color: #667eea;
     border-color: rgba(102, 126, 234, 0.3);
+  }
+  @keyframes xp-float {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-30px); }
   }
 </style>
 </head>
@@ -581,6 +891,7 @@
 
   <!-- Stats Bar -->
   <div class="stats-bar" id="statsBar"></div>
+  <div id="guardianRisk"></div>
 
   <!-- Timeline -->
   <div class="card full-width" id="section-timeline">
@@ -592,6 +903,7 @@
     <!-- Today -->
     <div class="card" id="section-today">
       <div class="card-title"><span class="icon">📋</span> 今日任务 <span id="todayDate" style="font-size:12px;color:#94a3b8;font-weight:400;margin-left:8px;"></span></div>
+      <div id="nowAction"></div>
       <div id="todaySection"></div>
     </div>
 
@@ -634,7 +946,7 @@
 <script>
 // ─── 初始数据（静态嵌入） ─────────────────────────
 let dashboardData = {
-  "generated_at": "2026-04-25 13:56:21",
+  "generated_at": "2026-04-25 17:02:45",
   "goals": [
     {
       "id": "goal-ai-interview",
@@ -867,7 +1179,13 @@ let dashboardData = {
       },
       "metrics": {
         "倒推": "| 周次 | 日期范围 | 重点 | 每日任务量 | 检查标准 |\n|------|---------|------|-----------|---------|\n| W1 | 4/25~5/1 | 梳理知识点 | 梳理完整清单+学习2个知识点 | 知识点清单完成 |\n| W2 | 5/2~5/8 | 核心知识（上） | 学习3个知识点+1个小练习 | 掌握5个知识点 |\n| W3 | 5/9~5/15 | 核心知识（下） | 学习3个知识点+1个小练习 | 掌握8个知识点 |\n| W4 | 5/16~5/22 | 项目实战1 | 完成第1个实战项目 | 项目1完成可演示 |\n| W5 | 5"
-      }
+      },
+      "deadline_iso": "2026-06-30",
+      "plan_start_iso": "2026-04-25",
+      "weekly_delta": 0,
+      "weekly_days": 1,
+      "weekly_pace": 0.0,
+      "trend_ready": false
     },
     {
       "id": "goal-cet4",
@@ -1071,7 +1389,13 @@ let dashboardData = {
       },
       "metrics": {
         "倒推": "| 周次 | 日期范围 | 重点 | 每日任务量 | 检查标准 |\n|------|---------|------|-----------|---------|\n| W1 | 4/25~5/1 | 恢复语感 | 背30词+1篇阅读+1篇听力 | 能读懂简单文章 |\n| W2 | 5/2~5/8 | 词汇加速 | 背50词+1阅读+1听力+1写作 | 词汇量恢复到3000 |\n| W3 | 5/9~5/15 | 听力突破 | 背50词+2听力+1阅读 | 听力正确率≥50% |\n| W4 | 5/16~5/22 | 阅读突破 | 背50词+2阅读+1听力 | 阅读正确率≥60% |\n| W5 "
-      }
+      },
+      "deadline_iso": "2026-06-13",
+      "plan_start_iso": "2026-04-25",
+      "weekly_delta": 0,
+      "weekly_days": 1,
+      "weekly_pace": 0.0,
+      "trend_ready": false
     },
     {
       "id": "goal-fitness",
@@ -1239,7 +1563,13 @@ let dashboardData = {
       },
       "metrics": {
         "倒推": "| 周次 | 日期范围 | 目标体重 | 需减 | 重点任务 |\n|------|---------|---------|------|---------|\n| W1 | 4/25~5/1 | 145.5斤 | 1斤 | 学减脂知识 + 建立饮食记录 + 开始运动 |\n| W2 | 5/2~5/8 | 144.5斤 | 1斤 | 执行饮食方案 + 运动加量 |\n| W3 | 5/9~5/15 | 143斤 | 1.5斤 | 严格饮食 + 有氧+力量 |\n| W4 | 5/16~5/22 | 141.5斤 | 1.5斤 | 保持强度 + 调整方案 |\n| W5 | 5/23~5/31 | 140"
-      }
+      },
+      "deadline_iso": "2026-05-31",
+      "plan_start_iso": "2026-04-25",
+      "weekly_delta": 0,
+      "weekly_days": 1,
+      "weekly_pace": 0.0,
+      "trend_ready": false
     }
   ],
   "today": {
@@ -1251,32 +1581,38 @@ let dashboardData = {
     "tasks": [
       {
         "done": true,
-        "text": "🥗 记录早餐（食物+估算热量，目标≤500大卡）"
+        "text": "🥗 记录早餐（食物+估算热量，目标≤500大卡）",
+        "slot": "起床后"
       },
       {
         "done": true,
-        "text": "📖 背30个英语单词（用APP或单词本）"
+        "text": "📖 背30个英语单词（用APP或单词本）",
+        "slot": "上午"
+      },
+      {
+        "done": false,
+        "text": "📚 阅读健身参考资料，了解热量计算方法",
+        "slot": "下午"
       },
       {
         "done": true,
-        "text": "📚 阅读健身参考资料，了解热量计算方法"
+        "text": "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）",
+        "slot": "下午"
       },
       {
         "done": true,
-        "text": "🤖 梳理AI面试知识点清单（LLM/Prompt/RAG/Agent等）"
+        "text": "✍️ 做1篇四级阅读理解（找回手感）",
+        "slot": "晚上"
       },
       {
-        "done": true,
-        "text": "✍️ 做1篇四级阅读理解（找回手感）"
-      },
-      {
-        "done": true,
-        "text": "🥗 记录晚餐（食物+估算热量，目标≤500大卡）"
+        "done": false,
+        "text": "🥗 记录晚餐（食物+估算热量，目标≤500大卡）",
+        "slot": "睡前"
       }
     ],
-    "done": 6,
+    "done": 4,
     "total": 6,
-    "pct": 100,
+    "pct": 67,
     "time_table": {
       "headers": [
         "时间窗口",
@@ -1310,7 +1646,7 @@ let dashboardData = {
         [
           "下午",
           "📚 阅读健身参考资料，了解热量计算方法",
-          "✅",
+          "⬜",
           "25",
           "🎯 减脂"
         ],
@@ -1331,7 +1667,7 @@ let dashboardData = {
         [
           "睡前",
           "🥗 记录晚餐（食物+估算热量，目标≤500大卡）",
-          "✅",
+          "⬜",
           "10",
           "🎯 减脂"
         ]
@@ -2181,12 +2517,20 @@ let dashboardData = {
       }
     ]
   },
-  "memory": []
+  "memory": [],
+  "guardian_alerts_created": [],
+  "guardian_alerts": []
 };
+let focusTimerState = null;
+let focusSession = null;
+let focusSoundEnabled = localStorage.getItem('focus-sound-enabled') !== '0';
+let failureDraft = null;
 
 // ─── 渲染函数 ──────────────────────────────────────
 function render(data) {
   document.getElementById('updateTime').textContent = '最后更新: ' + data.generated_at;
+  renderGuardianRisk(data.guardian_alerts || []);
+  renderNowAction(data.today, data.quicklog);
   renderStats(data);
   renderTimeline(data);
   renderGoals(data.goals);
@@ -2195,45 +2539,448 @@ function render(data) {
   renderWeekly(data.weekly_plan);
   renderHealth(data.health);
   renderFinance(data.finance);
+  maybeShowDailySummary(data);
+}
+
+function renderGuardianRisk(alerts) {
+  const el = document.getElementById('guardianRisk');
+  if (!el) return;
+  if (!alerts || alerts.length === 0) {
+    el.innerHTML = `<div class="guardian-ok">✅ 今日暂无高风险信号（Guardian 正在巡检中）</div>`;
+    return;
+  }
+  const html = alerts.slice(0, 3).map(a => `
+    <div class="risk-item">
+      • ${a.risk}
+      <span class="meta">建议：${a.action}</span>
+      <span class="meta">来源：${a.file}</span>
+    </div>
+  `).join('');
+  el.innerHTML = `<div class="guardian-risk"><h3>🚨 今日风险提示（Guardian）</h3>${html}</div>`;
+}
+
+function safeNum(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function parseDeadline(raw) {
+  if (!raw || raw === '未设定') return null;
+  const m = String(raw).match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  return new Date(`${m[1]}-${m[2]}-${m[3]}T23:59:59`);
+}
+
+function getDeadlineMeta(raw) {
+  const d = parseDeadline(raw);
+  if (!d) return { chip: 'gray', text: '未设定' };
+  const diff = d.getTime() - Date.now();
+  const abs = Math.abs(diff);
+  const days = Math.floor(abs / (24 * 3600 * 1000));
+  const hours = Math.floor((abs % (24 * 3600 * 1000)) / (3600 * 1000));
+  const countdown = `${days}天${hours}小时`;
+  if (diff < 0) return { chip: 'overdue', text: `已超时 ${countdown}` };
+  if (diff < 3 * 24 * 3600 * 1000) return { chip: 'red', text: `剩余 ${countdown}` };
+  if (diff < 7 * 24 * 3600 * 1000) return { chip: 'yellow', text: `剩余 ${countdown}` };
+  if (diff < 14 * 24 * 3600 * 1000) return { chip: 'blue', text: `剩余 ${countdown}` };
+  return { chip: 'gray', text: `剩余 ${countdown}` };
+}
+
+function getGoalForecast(goal) {
+  const total = safeNum(goal.milestones_total, 0);
+  const done = safeNum(goal.milestones_done, 0);
+  const remainingMilestones = Math.max(0, total - done);
+  const deadline = goal.deadline_iso ? new Date(goal.deadline_iso + 'T23:59:59') : parseDeadline(goal.deadline);
+  const start = goal.plan_start_iso ? new Date(goal.plan_start_iso + 'T00:00:00') : null;
+  const now = new Date();
+  const elapsedDays = start ? Math.max(1, Math.floor((now - start) / (24 * 3600 * 1000)) + 1) : 0;
+  const fullSpeed = elapsedDays > 0 ? done / elapsedDays : 0;
+  const weeklyPace = safeNum(goal.weekly_pace, 0);
+  const trendReady = !!goal.trend_ready;
+  const speed = weeklyPace > 0 ? weeklyPace : fullSpeed;
+  const paceLabel = weeklyPace > 0 ? '近7天' : '全周期';
+  const paceText = speed > 0 ? `${paceLabel} ${speed.toFixed(2)} 项/天` : '暂无速度数据';
+  if (!deadline) {
+    return {
+      paceText,
+      etaText: '预计完成: 无截止日期',
+      riskText: '风险: 未知',
+      riskClass: 'risk-mid',
+      trendText: '趋势: 数据不足'
+    };
+  }
+  if (remainingMilestones === 0) {
+    return {
+      paceText,
+      etaText: '预计完成: 已完成',
+      riskText: '风险: 低',
+      riskClass: 'risk-low',
+      trendText: '趋势: 收敛完成',
+      weeklyText: `本周增量: +${safeNum(goal.weekly_delta, 0)} 项`
+    };
+  }
+  let etaText = '预计完成: 暂无法预测';
+  let riskText = '风险: 中';
+  let riskClass = 'risk-mid';
+  let trendText = trendReady ? '趋势: 稳步推进' : '趋势: 数据积累中';
+  let weeklyText = `本周增量: ${safeNum(goal.weekly_delta, 0) >= 0 ? '+' : ''}${safeNum(goal.weekly_delta, 0)} 项/${safeNum(goal.weekly_days, 0)}天`;
+  if (speed > 0) {
+    const daysNeed = Math.ceil(remainingMilestones / speed);
+    const eta = new Date(now.getTime() + daysNeed * 24 * 3600 * 1000);
+    etaText = `预计完成: ${eta.toLocaleDateString('zh-CN')}`;
+    const delayDays = Math.ceil((eta - deadline) / (24 * 3600 * 1000));
+    if (delayDays > 0) {
+      riskText = `风险: 高（预计晚 ${delayDays} 天）`;
+      riskClass = 'risk-high';
+      trendText = '趋势: 可能延期';
+    } else if (delayDays > -3) {
+      riskText = '风险: 中（接近截止）';
+      riskClass = 'risk-mid';
+      trendText = '趋势: 临界推进';
+    } else {
+      riskText = '风险: 低（按期可达）';
+      riskClass = 'risk-low';
+      trendText = '趋势: 良好';
+    }
+  } else {
+    const daysLeft = Math.ceil((deadline - now) / (24 * 3600 * 1000));
+    if (daysLeft <= 3) {
+      riskText = '风险: 高（临期且未启动）';
+      riskClass = 'risk-high';
+      trendText = '趋势: 停滞';
+    } else {
+      trendText = '趋势: 尚未形成节奏';
+    }
+  }
+  return { paceText, etaText, riskText, riskClass, trendText, weeklyText };
+}
+
+function computeXp(data) {
+  const today = data.today || { done: 0, total: 0 };
+  const goals = data.goals || [];
+  const todayDone = safeNum(today.done);
+  const todayTotal = safeNum(today.total);
+  const goalDone = goals.reduce((s, g) => s + safeNum(g.milestones_done), 0);
+  const goalTotal = goals.reduce((s, g) => s + safeNum(g.milestones_total), 0);
+  const xp = todayDone * 15 + goalDone * 10;
+  const totalXp = Math.max(1, todayTotal * 15 + goalTotal * 10);
+  return { xp, totalXp };
+}
+
+function computeStreak(logs) {
+  const valid = Array.from(new Set((logs || []).map(l => l.date).filter(Boolean))).sort().reverse();
+  if (!valid.length) return { streak: 0, hasToday: false };
+  const todayStr = new Date().toISOString().slice(0, 10);
+  let streak = 1;
+  for (let i = 0; i < valid.length - 1; i++) {
+    const d1 = new Date(valid[i] + 'T00:00:00');
+    const d2 = new Date(valid[i + 1] + 'T00:00:00');
+    const delta = Math.round((d1 - d2) / (24 * 3600 * 1000));
+    if (delta === 1) streak++;
+    else break;
+  }
+  return { streak, hasToday: valid.includes(todayStr) };
+}
+
+function renderNowAction(today, quicklog) {
+  const el = document.getElementById('nowAction');
+  if (!el) return;
+  if (!today || !today.tasks || !today.tasks.length) {
+    el.innerHTML = `<div class="now-action"><div class="title">🧭 现在该做什么</div><div class="desc">先创建今天的任务清单，给自己一个明确的开场动作。</div></div>`;
+    return;
+  }
+  const undone = today.tasks.filter(t => !t.done);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? '上午行动' : (hour < 18 ? '下午推进' : '今晚收口');
+  const first = undone[0];
+  const firstIndex = today.tasks.findIndex(t => !t.done);
+  const streakMeta = computeStreak(quicklog);
+  let warning = '';
+  if (hour >= 21 && undone.length > 0) {
+    warning = `<div class="streak-alert">⚠️ 今天还有 ${undone.length} 项未完成，建议先做第一项，避免连击中断。</div>`;
+  } else if (!streakMeta.hasToday && streakMeta.streak > 0) {
+    warning = `<div class="streak-alert">🔥 当前连击 ${streakMeta.streak} 天，今天记得至少完成一项并记录。</div>`;
+  }
+  const desc = first ? `下一步就做：${first.text}` : '今日任务已完成，建议做 1 条 QuickLog 记录巩固成果。';
+  const button = first ? `<button class="start-btn" onclick="startFocusSprint(${firstIndex})">开始第一项（25分钟）</button><div id="focusTimer" class="focus-timer"></div>` : '';
+  el.innerHTML = `<div class="now-action"><div class="title">🧭 ${greeting} · 现在该做什么</div><div class="desc">${desc}</div>${button}${warning}</div>`;
 }
 
 function renderStats(data) {
   const goals = data.goals || [];
   const today = data.today;
-  const activeGoals = goals.filter(g => g.status === '进行中').length;
+  const goalCount = goals.length;
   const totalTasks = today ? today.total : 0;
   const doneTasks = today ? today.done : 0;
   const logs = (data.quicklog || []).length;
-  const pct = totalTasks > 0 ? Math.round(doneTasks / totalTasks * 100) : 0;
+  const { xp, totalXp } = computeXp(data);
+  const streakMeta = computeStreak(data.quicklog || []);
+  const nextLevelXp = Math.ceil((xp + 1) / 100) * 100;
+  const toNext = Math.max(0, nextLevelXp - xp);
 
   document.getElementById('statsBar').innerHTML = `
     <div class="stat-item">
-      <div class="stat-value">${activeGoals}</div>
-      <div class="stat-label">🎯 进行中目标</div>
+      <div class="stat-value">${goalCount}</div>
+      <div class="stat-label">🎯 目标数</div>
     </div>
     <div class="stat-item">
       <div class="stat-value">${doneTasks}/${totalTasks}</div>
-      <div class="stat-label">📋 今日任务</div>
+      <div class="stat-label">📋 今日进度</div>
     </div>
     <div class="stat-item">
-      <div class="stat-value">${pct}%</div>
-      <div class="stat-label">📊 今日完成率</div>
+      <div class="stat-value xp">${xp}/${totalXp}</div>
+      <div class="stat-label">⚡ XP / 总XP</div>
+      <div class="xp-next">距离下一级还差 ${toNext} XP</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value streak">${streakMeta.streak}</div>
+      <div class="stat-label">🔥 活跃连击数</div>
     </div>
     <div class="stat-item">
       <div class="stat-value">${logs}</div>
-      <div class="stat-label">📝 QuickLog记录</div>
+      <div class="stat-label">📝 记录数</div>
     </div>
   `;
+}
+
+function startFocusSprint(taskIndex) {
+  const timerEl = document.getElementById('focusTimer');
+  if (!timerEl) return;
+  const today = dashboardData.today || {};
+  const task = (today.tasks || [])[taskIndex];
+  if (!task) return;
+  if (focusTimerState && focusTimerState.intervalId) clearInterval(focusTimerState.intervalId);
+  const end = Date.now() + 25 * 60 * 1000;
+  focusSession = { taskIndex: taskIndex, taskText: task.text, endAt: end };
+  openFocusOverlay();
+  const tick = () => {
+    const left = Math.max(0, end - Date.now());
+    const mm = String(Math.floor(left / 60000)).padStart(2, '0');
+    const ss = String(Math.floor((left % 60000) / 1000)).padStart(2, '0');
+    timerEl.textContent = left > 0 ? `⏳ 专注进行中：${mm}:${ss}` : '✅ 25分钟完成，去勾选这一项吧！';
+    updateFocusOverlayClock(mm, ss, left <= 0);
+    if (left <= 0 && focusTimerState && focusTimerState.intervalId) {
+      clearInterval(focusTimerState.intervalId);
+      focusTimerState.intervalId = null;
+    }
+  };
+  tick();
+  focusTimerState = {
+    intervalId: setInterval(tick, 1000)
+  };
+}
+
+function openFocusOverlay() {
+  if (!focusSession) return;
+  closeFocusOverlay();
+  const overlay = document.createElement('div');
+  overlay.id = 'focusOverlay';
+  overlay.className = 'focus-overlay';
+  overlay.innerHTML = `
+    <div class="panel">
+      <h3>🎯 专注模式</h3>
+      <p>当前只做这一件事：</p>
+      <p><strong>${focusSession.taskText}</strong></p>
+      <div class="clock" id="focusOverlayClock">25:00</div>
+      <div class="btns">
+        <button class="btn btn-success" id="focusDoneBtn" style="display:none;">我已完成，立即打勾</button>
+        <button class="btn btn-primary" id="focusContinueBtn">继续专注</button>
+        <button class="btn btn-muted" id="focusSoundBtn"></button>
+        <button class="btn btn-muted" id="focusCloseBtn">稍后继续</button>
+      </div>
+      <div class="hint">按 Esc 可退出专注模式</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  const doneBtn = document.getElementById('focusDoneBtn');
+  const contBtn = document.getElementById('focusContinueBtn');
+  const soundBtn = document.getElementById('focusSoundBtn');
+  const closeBtn = document.getElementById('focusCloseBtn');
+  if (soundBtn) {
+    soundBtn.textContent = focusSoundEnabled ? '🔔 提示音：开' : '🔕 提示音：关';
+    soundBtn.addEventListener('click', toggleFocusSound);
+  }
+  if (doneBtn) doneBtn.addEventListener('click', completeFocusTask);
+  if (contBtn) contBtn.addEventListener('click', () => null);
+  if (closeBtn) closeBtn.addEventListener('click', closeFocusOverlay);
+  document.addEventListener('keydown', handleFocusOverlayKeydown);
+}
+
+function updateFocusOverlayClock(mm, ss, finished) {
+  const clock = document.getElementById('focusOverlayClock');
+  if (!clock) return;
+  clock.textContent = `${mm}:${ss}`;
+  const doneBtn = document.getElementById('focusDoneBtn');
+  const continueBtn = document.getElementById('focusContinueBtn');
+  if (finished) {
+    if (doneBtn) doneBtn.style.display = '';
+    if (continueBtn) continueBtn.textContent = '已到时，查看任务';
+    if (!focusSession || !focusSession.rang) {
+      playFocusDoneSound();
+      if (focusSession) focusSession.rang = true;
+    }
+  }
+}
+
+function closeFocusOverlay() {
+  const el = document.getElementById('focusOverlay');
+  if (el) el.remove();
+  document.removeEventListener('keydown', handleFocusOverlayKeydown);
+}
+
+function handleFocusOverlayKeydown(e) {
+  if (e.key === 'Escape') {
+    closeFocusOverlay();
+  }
+}
+
+function toggleFocusSound() {
+  focusSoundEnabled = !focusSoundEnabled;
+  localStorage.setItem('focus-sound-enabled', focusSoundEnabled ? '1' : '0');
+  const soundBtn = document.getElementById('focusSoundBtn');
+  if (soundBtn) {
+    soundBtn.textContent = focusSoundEnabled ? '🔔 提示音：开' : '🔕 提示音：关';
+  }
+}
+
+function playFocusDoneSound() {
+  if (!focusSoundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    const play = (freq, start, duration) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.1, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration);
+    };
+    play(880, now, 0.16);
+    play(1174, now + 0.18, 0.16);
+    play(1568, now + 0.36, 0.2);
+  } catch (e) {
+    // Ignore if audio context is unavailable.
+  }
+}
+
+function completeFocusTask() {
+  if (!focusSession) return;
+  const taskIndex = focusSession.taskIndex;
+  const taskItems = document.querySelectorAll('.task-item');
+  if (taskItems[taskIndex]) {
+    const el = taskItems[taskIndex];
+    el.querySelector('.check-icon').textContent = '✅';
+    el.classList.add('done');
+    showXpFloat(el, '+10 XP');
+  }
+
+  const queue = JSON.parse(localStorage.getItem('stone_sync_queue') || '[]');
+  queue.push({
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    type: 'toggle-task',
+    index: taskIndex,
+    done: true,
+    timestamp: new Date().toISOString()
+  });
+  localStorage.setItem('stone_sync_queue', JSON.stringify(queue));
+
+  closeFocusOverlay();
+  updateTodayProgressUI(1);
+
+  fetch('/api/toggle-task', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ index: taskIndex })
+  }).catch(() => {});
+}
+
+function openFailureReview(taskIndex) {
+  const today = dashboardData.today || {};
+  const t = (today.tasks || [])[taskIndex];
+  if (!t) return;
+  closeFailureReviewModal();
+  failureDraft = { taskIndex, task: t.text, slot: t.slot || '' };
+  const modal = document.createElement('div');
+  modal.id = 'failureModal';
+  modal.className = 'failure-modal';
+  modal.innerHTML = `
+    <div class="panel">
+      <h4>🧩 失败复盘</h4>
+      <div class="task">任务：${t.text} ${t.slot ? `（${t.slot}）` : ''}</div>
+      <label>失败原因（发生了什么）</label>
+      <textarea id="failureReason" placeholder="例如：被临时事务打断，没有在预定时间窗启动。"></textarea>
+      <label>改进动作（下一次怎么避免）</label>
+      <textarea id="failureAction" placeholder="例如：提前 10 分钟清空通知；把任务拆成 20 分钟可执行子任务。"></textarea>
+      <div class="btns">
+        <button class="btn btn-muted" id="failureCancelBtn">取消</button>
+        <button class="btn btn-primary" id="failureSaveBtn">保存复盘</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  const cancelBtn = document.getElementById('failureCancelBtn');
+  const saveBtn = document.getElementById('failureSaveBtn');
+  if (cancelBtn) cancelBtn.addEventListener('click', closeFailureReviewModal);
+  if (saveBtn) saveBtn.addEventListener('click', submitFailureReview);
+}
+
+function closeFailureReviewModal() {
+  const modal = document.getElementById('failureModal');
+  if (modal) modal.remove();
+}
+
+function submitFailureReview() {
+  if (!failureDraft) return;
+  const today = dashboardData.today || {};
+  const reason = (document.getElementById('failureReason') || { value: '' }).value.trim();
+  const action = (document.getElementById('failureAction') || { value: '' }).value.trim();
+  if (!reason) {
+    window.alert('请先填写失败原因。');
+    return;
+  }
+
+  const queue = JSON.parse(localStorage.getItem('stone_sync_queue') || '[]');
+  queue.push({
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    type: 'failure-review',
+    task_text: failureDraft.task,
+    reason: reason,
+    learnings: action,
+    timestamp: new Date().toISOString()
+  });
+  localStorage.setItem('stone_sync_queue', JSON.stringify(queue));
+
+  closeFailureReviewModal();
+  window.alert('失败复盘已记录到 reviews 和 quicklog。');
+
+  fetch('/api/save-failure-review', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      date: today.date,
+      task: failureDraft.task,
+      slot: failureDraft.slot,
+      reason: reason,
+      action: action
+    })
+  }).catch(() => {});
 }
 
 function renderTimeline(data) {
   const goals = (data.goals || []).filter(g => g.deadline && g.deadline !== '未设定');
   // Sort by remaining days (nearest deadline first)
-  goals.sort((a, b) => (a.remaining || 999) - (b.remaining || 999));
+  goals.sort((a, b) => parseDeadline(a.deadline) - parseDeadline(b.deadline));
   let items = '<div class="tl-item"><div class="tl-dot now"></div><div class="tl-label">今天<br><small>' +
     new Date().toLocaleDateString('zh-CN') + '</small></div></div>';
   for (const g of goals) {
-    items += `<div class="tl-item"><div class="tl-dot deadline"></div><div class="tl-label">${g.emoji} ${g.title}<br><small>${g.deadline} (${g.remaining}天)</small></div></div>`;
+    const meta = getDeadlineMeta(g.deadline);
+    items += `<div class="tl-item"><div class="tl-dot deadline"></div><div class="tl-label">${g.emoji} ${g.title}<br><small>${g.deadline} · ${meta.text}</small></div></div>`;
   }
   document.getElementById('timeline').innerHTML = '<div class="timeline">' + items + '</div>';
 }
@@ -2274,6 +3021,8 @@ function renderGoals(goals) {
 
     // Deadline display
     const tagsHtml = (g.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+    const deadlineMeta = getDeadlineMeta(g.deadline);
+    const forecast = getGoalForecast(g);
 
     html += `
     <div class="goal-card fade-in" style="border-left-color:${g.status_color}">
@@ -2284,11 +3033,18 @@ function renderGoals(goals) {
       </div>
       <div class="goal-meta">
         <span>📅 ${g.deadline}</span>
-        <span>⏰ 剩余: ${g.remaining}天</span>
+        <span class="deadline-chip ${deadlineMeta.chip}">⏰ ${deadlineMeta.text}</span>
         <span>📊 ${g.progress}</span>
       </div>
       <div class="progress-bar">
         <div class="progress-fill ${fillClass}" style="width:${pct}%"></div>
+      </div>
+      <div class="goal-forecast">
+        <div class="chip">📈 ${forecast.trendText}</div>
+        <div class="chip ${forecast.riskClass}">⚠️ ${forecast.riskText}</div>
+        <div class="chip">⏱️ ${forecast.paceText}</div>
+        <div class="chip">🗓️ ${forecast.etaText}</div>
+        <div class="chip" style="grid-column:1 / -1">📊 ${forecast.weeklyText}</div>
       </div>
       <div class="milestones">${msHtml}</div>
       ${bpHtml}
@@ -2335,9 +3091,9 @@ function renderToday(today) {
 
   // Progress
   html += `<div class="progress-section">
-    <div class="progress-label">今日进度: ${today.done}/${today.total} (${today.pct}%)</div>
+    <div class="progress-label" id="todayProgressLabel">今日进度: ${today.done}/${today.total} (${today.pct}%)</div>
     <div class="progress-bar large">
-      <div class="progress-fill ${today.pct >= 80 ? 'green' : today.pct >= 40 ? '' : 'red'}" style="width:${today.pct}%"></div>
+      <div id="todayProgressFill" class="progress-fill ${today.pct >= 80 ? 'green' : today.pct >= 40 ? '' : 'red'}" style="width:${today.pct}%"></div>
     </div>
   </div>`;
 
@@ -2346,9 +3102,13 @@ function renderToday(today) {
   for (let ti = 0; ti < today.tasks.length; ti++) {
     const t = today.tasks[ti];
     const icon = t.done ? '✅' : '⬜';
-    html += `<div class="task-item ${t.done ? 'done' : ''}" onclick="toggleTask(${ti}, this)" title="点击切换完成状态"><span class="check-icon">${icon}</span> ${t.text}</div>`;
+    const deadlineChip = t.slot ? `<span class="task-deadline">⏰ ${t.slot}</span>` : '';
+    html += `<div class="task-item ${t.done ? 'done' : ''}" onclick="toggleTask(${ti}, this)" title="点击切换完成状态"><span class="check-icon">${icon}</span><span class="task-main">${t.text}</span>${deadlineChip}<button class="fail-btn" onclick="event.stopPropagation();openFailureReview(${ti})">失败复盘</button></div>`;
   }
   html += '</div>';
+  if (today.total > 0 && today.done === today.total) {
+    html += '<div class="celebration">🎉 今日任务全部完成！继续写一条复盘，连击更稳。</div>';
+  }
 
   el.innerHTML = html;
 }
@@ -2447,68 +3207,237 @@ function renderFinance(finance) {
 }
 
 // ─── 交互：点击切换任务/里程碑状态 ──────────────────
+function showXpFloat(el, text) {
+  const float = document.createElement('div');
+  float.textContent = text;
+  float.style.cssText = `
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    color: #667eea;
+    font-weight: 700;
+    font-size: 14px;
+    pointer-events: none;
+    animation: xp-float 1s ease-out forwards;
+    z-index: 100;
+  `;
+  el.style.position = 'relative';
+  el.appendChild(float);
+  setTimeout(() => float.remove(), 1000);
+}
+
 function toggleTask(index, el) {
   if (el.classList.contains('syncing')) return;
-  el.classList.add('syncing');
-  // Optimistic UI update
+
+  // 1. 乐观更新 UI
   const wasDone = el.classList.contains('done');
   el.querySelector('.check-icon').textContent = wasDone ? '⬜' : '✅';
   el.classList.toggle('done', !wasDone);
 
+  // 2. 添加 XP 飘字动画
+  if (!wasDone) {
+    showXpFloat(el, '+10 XP');
+  }
+
+  // 3. 写入 localStorage 待同步队列
+  const queue = JSON.parse(localStorage.getItem('stone_sync_queue') || '[]');
+  queue.push({
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    type: 'toggle-task',
+    index: index,
+    done: !wasDone,
+    timestamp: new Date().toISOString()
+  });
+  localStorage.setItem('stone_sync_queue', JSON.stringify(queue));
+
+  // 4. 更新进度 UI
+  updateTodayProgressUI(wasDone ? -1 : 1);
+
+  // 5. 检查是否全部完成
+  if (!wasDone) {
+    const pending = document.querySelectorAll('.task-item:not(.done)');
+    if (pending.length === 0) {
+      celebrateCompletion();
+    }
+  }
+
+  // 6. 1秒后尝试 POST 同步（本地访问时生效，iframe 中会静默失败）
   fetch('/api/toggle-task', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ index: index })
-  })
-  .then(r => r.json())
-  .then(result => {
-    el.classList.remove('syncing');
-    if (result.ok) {
-      setTimeout(fetchAndUpdate, 500);
-    } else {
-      // Revert on error
-      el.querySelector('.check-icon').textContent = wasDone ? '✅' : '⬜';
-      el.classList.toggle('done', wasDone);
-    }
-  })
-  .catch(err => {
-    el.classList.remove('syncing');
-    // Revert on error
-    el.querySelector('.check-icon').textContent = wasDone ? '✅' : '⬜';
-    el.classList.toggle('done', wasDone);
-  });
+  }).catch(() => {}); // 静默忽略错误
+}
+
+function updateTodayProgressUI(deltaDone) {
+  const label = document.getElementById('todayProgressLabel');
+  const fill = document.getElementById('todayProgressFill');
+  if (!label || !fill) return;
+  const m = label.textContent.match(/(\d+)\/(\d+)/);
+  if (!m) return;
+  const total = safeNum(m[2], 0);
+  const currentDone = safeNum(m[1], 0);
+  const nextDone = Math.max(0, Math.min(total, currentDone + deltaDone));
+  const pct = total > 0 ? Math.round(nextDone / total * 100) : 0;
+  label.textContent = `今日进度: ${nextDone}/${total} (${pct}%)`;
+  fill.style.width = `${pct}%`;
+  fill.classList.toggle('green', pct >= 80);
+  fill.classList.toggle('red', pct < 40);
+  fill.classList.add('pulse');
+  setTimeout(() => fill.classList.remove('pulse'), 850);
 }
 
 function toggleMilestone(goalFile, index, el) {
-  el.classList.add('syncing');
+  const wasDone = el.classList.contains('done');
+  const icon = wasDone ? '⬜' : '✅';
+  el.firstChild.textContent = icon + ' ';
+  el.classList.toggle('done', !wasDone);
+
+  const queue = JSON.parse(localStorage.getItem('stone_sync_queue') || '[]');
+  queue.push({
+    id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+    type: 'toggle-milestone',
+    goal_file: goalFile,
+    index: index,
+    done: !wasDone,
+    timestamp: new Date().toISOString()
+  });
+  localStorage.setItem('stone_sync_queue', JSON.stringify(queue));
+
   fetch('/api/toggle-milestone', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ goal_file: goalFile, index: index })
-  })
-  .then(r => r.json())
-  .then(result => {
-    if (result.ok) {
-      const icon = result.done ? '✅' : '⬜';
-      el.firstChild.textContent = icon + ' ';
-      el.classList.toggle('done', result.done);
-      setTimeout(fetchAndUpdate, 300);
-    } else {
-      el.classList.remove('syncing');
-    }
-  })
-  .catch(err => {
-    el.classList.remove('syncing');
-  });
+  }).catch(() => {});
+}
+
+function maybeShowDailySummary(data) {
+  const today = data.today;
+  if (!today) return;
+  const now = new Date();
+  if (now.getHours() < 23) return;
+  const key = `daily-summary-${today.date}`;
+  if (localStorage.getItem(key)) return;
+  const { xp, totalXp } = computeXp(data);
+  const streakMeta = computeStreak(data.quicklog || []);
+  const summary = document.createElement('div');
+  summary.className = 'daily-summary';
+  summary.innerHTML = `
+    <h4>🌙 今日总结</h4>
+    <p>完成任务：${today.done}/${today.total}<br>XP：${xp}/${totalXp}<br>连击：${streakMeta.streak} 天<br>明日建议：先完成今天未完成项中最重要的一项。</p>
+    <button id="closeDailySummary">知道了</button>
+  `;
+  document.body.appendChild(summary);
+  const closeBtn = document.getElementById('closeDailySummary');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      localStorage.setItem(key, '1');
+      const undone = (today.tasks || []).filter(t => !t.done);
+      fetch('/api/save-daily-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: today.date,
+          done: today.done,
+          total: today.total,
+          xp: xp,
+          total_xp: totalXp,
+          streak: streakMeta.streak,
+          next_action: undone.length ? `优先完成：${undone[0].text}` : '保持节奏并安排明日第一项任务'
+        })
+      }).catch(() => null);
+      summary.remove();
+    });
+  }
 }
 
 // ─── 动态刷新 ──────────────────────────────────────
+function applyPendingOps(data) {
+  // 把 localStorage 待同步队列中的操作叠加到服务器数据上
+  // 这样即使 POST 失败，乐观状态也不会被 render 覆盖
+  const queue = JSON.parse(localStorage.getItem('stone_sync_queue') || '[]');
+  if (queue.length === 0) return data;
+
+  const taskOps = queue.filter(q => q.type === 'toggle-task');
+  const milestoneOps = queue.filter(q => q.type === 'toggle-milestone');
+
+  // 应用任务操作
+  if (taskOps.length > 0 && data.today && data.today.tasks) {
+    for (const op of taskOps) {
+      if (data.today.tasks[op.index]) {
+        data.today.tasks[op.index].done = op.done;
+      }
+    }
+    // 重新计算 done/total/pct
+    data.today.done = data.today.tasks.filter(t => t.done).length;
+    data.today.total = data.today.tasks.length;
+    data.today.pct = data.today.total > 0 ? Math.round(data.today.done / data.today.total * 100) : 0;
+  }
+
+  // 应用里程碑操作
+  if (milestoneOps.length > 0 && data.goals) {
+    for (const op of milestoneOps) {
+      for (const g of data.goals) {
+        if (g.file === op.goal_file && g.tasks && g.tasks[op.index]) {
+          g.tasks[op.index].done = op.done;
+        }
+      }
+    }
+  }
+
+  return data;
+}
+
+function cleanSyncedQueue(serverData) {
+  const queue = JSON.parse(localStorage.getItem('stone_sync_queue') || '[]');
+  if (queue.length === 0) return;
+
+  const remaining = [];
+  for (const item of queue) {
+    let synced = false;
+    if (item.type === 'toggle-task' && serverData.today && serverData.today.tasks) {
+      const task = serverData.today.tasks[item.index];
+      if (task && task.done === item.done) synced = true;
+    }
+    if (item.type === 'toggle-milestone' && serverData.goals) {
+      for (const g of serverData.goals) {
+        if (g.file === item.goal_file && g.tasks && g.tasks[item.index]) {
+          if (g.tasks[item.index].done === item.done) synced = true;
+        }
+      }
+    }
+    if (!synced) remaining.push(item);
+  }
+
+  if (remaining.length !== queue.length) {
+    localStorage.setItem('stone_sync_queue', JSON.stringify(remaining));
+  }
+}
+
 function fetchAndUpdate() {
-  fetch('/api/data')
+  // 收集待同步队列
+  const queue = JSON.parse(localStorage.getItem('stone_sync_queue') || '[]');
+  let url = '/api/data';
+  if (queue.length > 0) {
+    // 通过 GET 参数把队列发给服务器，服务器会自动执行并改 md
+    url += '?sync=' + encodeURIComponent(JSON.stringify(queue));
+  }
+
+  fetch(url)
     .then(r => r.json())
     .then(data => {
+      // 服务器已执行同步，清理本地队列
+      if (queue.length > 0) {
+        localStorage.setItem('stone_sync_queue', '[]');
+      }
+
+      // 叠加可能残留的本地操作（正常情况下应该为空了）
+      data = applyPendingOps(data);
       dashboardData = data;
       render(data);
+
+      // 清理已同步的队列项
+      cleanSyncedQueue(data);
     })
     .catch(err => {
       console.log('Fetch failed, using embedded data:', err.message);
@@ -2548,7 +3477,12 @@ window.addEventListener('scroll', updateActiveNav, { passive: true });
 navPills.forEach(pill => {
   pill.addEventListener('click', e => {
     e.preventDefault();
-    const target = document.querySelector(pill.getAttribute('href'));
+    const href = pill.getAttribute('href');
+    if (!href || href === '#') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const target = document.querySelector(href);
     if (target) {
       target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }

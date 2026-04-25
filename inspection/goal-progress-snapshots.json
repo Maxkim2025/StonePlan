@@ -1,0 +1,34 @@
+{
+  "goals": {
+    "goal-ai-interview": {
+      "title": "AI应用开发面试准备",
+      "history": [
+        {
+          "date": "2026-04-25",
+          "done": 0,
+          "total": 11
+        }
+      ]
+    },
+    "goal-cet4": {
+      "title": "四级英语考试",
+      "history": [
+        {
+          "date": "2026-04-25",
+          "done": 1,
+          "total": 11
+        }
+      ]
+    },
+    "goal-fitness": {
+      "title": "减脂到140斤",
+      "history": [
+        {
+          "date": "2026-04-25",
+          "done": 0,
+          "total": 9
+        }
+      ]
+    }
+  }
+}
