@@ -881,9 +881,6 @@ def scan_memory():
 
 def collect_data():
     """收集所有数据为 JSON"""
-    # 自动为今天生成计划（如果不存在）
-    auto_generate_today()
-    
     goals = scan_goals()
     today = scan_today_tasks()
     quicklog = scan_quicklog()
